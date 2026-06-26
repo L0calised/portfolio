@@ -691,25 +691,6 @@ function App() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [activeStat.href, focusedPane, handleShellKey, moveFiles, moveStats])
 
-  useEffect(() => {
-    const onWheel = (event) => {
-      if (!window.matchMedia('(max-width: 980px)').matches) return
-      const scrollPane = event.target.closest('.meter-list, .stat-detail')
-
-      if (scrollPane && canScrollInDirection(scrollPane, event.deltaY)) {
-        return
-      }
-
-      if (!event.target.closest('.window-body, .shell-output, .file-column, .preview, .meter-list, .stat-detail')) return
-
-      event.preventDefault()
-      window.scrollBy({ top: event.deltaY, left: 0, behavior: 'auto' })
-    }
-
-    window.addEventListener('wheel', onWheel, { passive: false })
-    return () => window.removeEventListener('wheel', onWheel)
-  }, [])
-
   const desktopClass = theme === 'amber' ? 'theme-amber' : 'theme-paper'
 
   return (
@@ -1110,15 +1091,6 @@ function scrollChildIntoContainer(container, child) {
   } else if (childRect.bottom > containerRect.bottom) {
     container.scrollTop += childRect.bottom - containerRect.bottom
   }
-}
-
-function canScrollInDirection(element, deltaY) {
-  if (!element || element.scrollHeight <= element.clientHeight) return false
-
-  if (deltaY < 0) return element.scrollTop > 0
-  if (deltaY > 0) return element.scrollTop + element.clientHeight < element.scrollHeight - 1
-
-  return false
 }
 
 function clamp(value, min, max) {

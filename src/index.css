@@ -745,9 +745,9 @@ a:focus-visible {
 
   .meter-list,
   .stat-detail {
-    max-height: 52dvh;
-    overflow: auto;
-    overscroll-behavior: contain;
+    max-height: none;
+    overflow: visible;
+    overscroll-behavior: auto;
   }
 
   .shell-output,
@@ -759,8 +759,8 @@ a:focus-visible {
 
   .meter-list,
   .stat-detail {
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
+    -webkit-overflow-scrolling: auto;
+    touch-action: auto;
   }
 
   .completion-menu {
