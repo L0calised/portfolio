@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 const panes = ['shell', 'files', 'stats']
 const commandNames = [
@@ -30,8 +30,9 @@ const profile = {
   role: 'terminal-first developer',
   wm: 'Hyprland',
   shell: 'zsh',
+  terminal: "xterm-kitty",
   editor: 'nvim',
-  uptime: '19 years learning, still compiling',
+  uptime: '21 years',
   palette: ['#f59e0b', '#f8fafc', '#171717', '#737373'],
 }
 
@@ -294,6 +295,7 @@ function App() {
   const [expandedStat, setExpandedStat] = useState(0)
   const [theme, setTheme] = useState('amber')
   const meterListRef = useRef(null)
+  const inputRef = useRef(null)
 
   const activeFolder = tree[folderIndex]
   const activeFile = activeFolder.files[Math.min(fileIndex, activeFolder.files.length - 1)]
@@ -508,7 +510,11 @@ function App() {
 
   const moveStats = useCallback((direction) => {
     if (direction === 'up' || direction === 'down') {
-      setStatIndex((current) => clamp(current + (direction === 'down' ? 1 : -1), 0, stats.length - 1))
+      setStatIndex((current) => {
+        const next = clamp(current + (direction === 'down' ? 1 : -1), 0, stats.length - 1)
+        setExpandedStat((expanded) => (expanded === null ? null : next))
+        return next
+      })
       return
     }
 
@@ -577,15 +583,60 @@ function App() {
     }
   }, [completeLine, history, historyIndex, line, runCommand])
 
+  const handleInputKeyDown = useCallback((event) => {
+    if (event.key === 'Tab' || event.key === 'Enter' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+      handleShellKey(event)
+      return
+    }
+
+    if (event.key === 'Backspace' || event.key === 'Delete') {
+      setCompletionOptions([])
+      setCompletionCycle(null)
+    }
+  }, [handleShellKey])
+
+  const handleInputChange = useCallback((event) => {
+    setCompletionOptions([])
+    setCompletionCycle(null)
+    setLine(event.target.value)
+  }, [])
+
+  useLayoutEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
+
+    const resetScroll = () => {
+      window.scrollTo(0, 0)
+      document.documentElement.scrollTop = 0
+      document.body.scrollTop = 0
+    }
+
+    resetScroll()
+    requestAnimationFrame(resetScroll)
+    const timeout = window.setTimeout(resetScroll, 120)
+    const lateTimeout = window.setTimeout(resetScroll, 450)
+    window.addEventListener('pageshow', resetScroll)
+
+    return () => {
+      window.clearTimeout(timeout)
+      window.clearTimeout(lateTimeout)
+      window.removeEventListener('pageshow', resetScroll)
+    }
+  }, [])
+
   useEffect(() => {
     const selectedMeter = meterListRef.current?.querySelector('.meter.selected')
-    selectedMeter?.scrollIntoView({ block: 'nearest' })
+    scrollChildIntoContainer(meterListRef.current, selectedMeter)
   }, [statIndex])
 
   useEffect(() => {
     const onKeyDown = (event) => {
+      if (event.defaultPrevented) return
+
       const arrowDirection = getArrowDirection(event.key)
       const localDirection = getLocalDirection(event.key)
+      const isPromptInput = event.target === inputRef.current
 
       if (event.key === 'Tab') {
         event.preventDefault()
@@ -610,6 +661,8 @@ function App() {
         if (activeStat.href !== '#') window.open(activeStat.href, '_blank', 'noopener,noreferrer')
         return
       }
+
+      if (isPromptInput) return
 
       if (focusedPane === 'shell') {
         handleShellKey(event)
@@ -637,6 +690,25 @@ function App() {
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [activeStat.href, focusedPane, handleShellKey, moveFiles, moveStats])
+
+  useEffect(() => {
+    const onWheel = (event) => {
+      if (!window.matchMedia('(max-width: 980px)').matches) return
+      const scrollPane = event.target.closest('.meter-list, .stat-detail')
+
+      if (scrollPane && canScrollInDirection(scrollPane, event.deltaY)) {
+        return
+      }
+
+      if (!event.target.closest('.window-body, .shell-output, .file-column, .preview, .meter-list, .stat-detail')) return
+
+      event.preventDefault()
+      window.scrollBy({ top: event.deltaY, left: 0, behavior: 'auto' })
+    }
+
+    window.addEventListener('wheel', onWheel, { passive: false })
+    return () => window.removeEventListener('wheel', onWheel)
+  }, [])
 
   const desktopClass = theme === 'amber' ? 'theme-amber' : 'theme-paper'
 
@@ -668,6 +740,10 @@ function App() {
             currentLine={line}
             completionOptions={completionOptions}
             completionIndex={completionCycle?.index ?? null}
+            inputRef={inputRef}
+            onInputChange={handleInputChange}
+            onInputKeyDown={handleInputKeyDown}
+            onInputFocus={() => setFocusedPane('shell')}
           />
         </TerminalWindow>
 
@@ -744,16 +820,17 @@ function App() {
               {expandedStat === null ? (
                 <p>right arrow expands the selected row</p>
               ) : (
-                <>
+                <div key={expandedStat}>
                   <div className="big-number">{stats[expandedStat].value}</div>
                   <h2>{stats[expandedStat].name}</h2>
+                  <p className="stat-meta">{stats[expandedStat].meta}</p>
                   {stats[expandedStat].lines.map((item) => (
                     <p key={item}>- {item}</p>
                   ))}
                   <a href={stats[expandedStat].href} target="_blank" rel="noreferrer" tabIndex={-1}>
                     open with enter / alt+o
                   </a>
-                </>
+                </div>
               )}
             </section>
           </div>
@@ -821,18 +898,28 @@ function Fastfetch() {
   return (
     <section className="fastfetch">
       <pre aria-hidden="true">
-{`      /\\
-     /  \\
-    / /\\ \\
-   / ____ \\
-  /_/    \\_\\
- hyprfolio`}
+{`⣿⣿⣿⣿⡿⢟⣛⣫⡍⡉⢩⣭⣛⡻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+⣿⣿⠟⢥⣾⡿⣿⣿⡻⡄⠀⣿⣿⣿⢦⠈⡛⢿⣿⣿⣿⣿⣿⣿
+⣿⢣⡎⠸⣿⠘⡜⢿⣿⢿⡄⢸⣿⢻⡏⠀⠈⢳⠝⢿⣿⣿⣿⣿
+⣇⢸⢱⢀⠹⣆⠈⢆⠻⣦⠂⠀⡇⠘⠃⠀⠀⠀⠉⠃⠹⣿⣿⣿
+⠈⢸⠈⢸⡆⡌⢂⠀⢂⠈⢣⠀⠁⡇⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿
+⠀⢸⢀⠀⣿⣜⣆⠁⠀⠑⣀⠡⠀⡇⠀⠤⡀⠀⢠⣐⣶⣦⣤⣬
+⠀⠸⠈⣦⢸⣿⣾⣿⣶⠂⠈⠁⡀⡇⠀⣿⡇⠀⡀⣿⣿⣿⣿⣿
+⢠⡀⠀⠈⠁⠹⣿⣿⣧⣧⣀⣤⡇⠃⠀⡩⠃⠀⣧⢹⣿⣿⣿⣿
+⣼⡇⠀⠀⢧⣴⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⢹⣸⣿⣿⣿⣿
+⣿⡇⢀⠀⠸⣿⣷⣿⣛⣿⣿⡿⠀⠀⠀⠀⠀⠀⠘⡇⣿⣿⣿⣿
+⣿⣷⢸⠀⠀⠈⠛⠿⣿⠿⣫⣴⠀⠀⠀⠀⠀⢠⠀⢡⢻⣿⣿⣿
+⣿⣿⡀⡇⠀⠀⠀⠀⠀⢸⣿⡟⠀⢰⡀⠀⠀⢸⡇⠸⣸⣿⣿⣿
+⣿⣿⡇⢰⠀⠀⠀⣠⣴⠿⣟⠁⠀⣞⣿⡶⡠⣈⡃⠀⠀⣿⣿⣿
+⣿⣿⣷⠈⢰⢎⣾⣿⣵⣿⣿⠀⠰⠿⢟⡜⣼⣿⣿⡆⠀⢻⣿⣿
+⣿⣿⣧⡃⠀⣿⡟⠛⠿⣶⠆⢀⣿⣾⣿⢇⣿⣿⣿⣷⠀⢸⣿⣿`}
       </pre>
       <div>
         <Info label="user" value={`${profile.user}@${profile.host}`} />
         <Info label="role" value={profile.role} />
         <Info label="wm" value={profile.wm} />
         <Info label="shell" value={profile.shell} />
+        <Info label="terminal" value={profile.terminal} />
         <Info label="editor" value={profile.editor} />
         <Info label="uptime" value={profile.uptime} />
         <div className="swatches">
@@ -854,7 +941,16 @@ function Info({ label, value }) {
   )
 }
 
-function ShellOutput({ lines, currentLine, completionOptions, completionIndex }) {
+function ShellOutput({
+  lines,
+  currentLine,
+  completionOptions,
+  completionIndex,
+  inputRef,
+  onInputChange,
+  onInputFocus,
+  onInputKeyDown,
+}) {
   const outputRef = useRef(null)
 
   useEffect(() => {
@@ -864,7 +960,7 @@ function ShellOutput({ lines, currentLine, completionOptions, completionIndex })
   }, [lines, currentLine, completionOptions])
 
   return (
-    <div className="shell-output" ref={outputRef}>
+    <div className="shell-output" onClick={() => inputRef.current?.focus()} ref={outputRef}>
       {lines.map((item, index) => (
         item === ''
           ? <br key={`${item}-${index}`} />
@@ -872,8 +968,20 @@ function ShellOutput({ lines, currentLine, completionOptions, completionIndex })
       ))}
       <div className="prompt-line">
         <span className="prompt">{shellPrompt}</span>
-        <span className="typed">{currentLine}</span>
-        <span className="cursor" />
+        <input
+          ref={inputRef}
+          aria-label="Terminal command"
+          autoCapitalize="none"
+          autoComplete="off"
+          autoCorrect="off"
+          className="terminal-input"
+          inputMode="text"
+          onChange={onInputChange}
+          onFocus={onInputFocus}
+          onKeyDown={onInputKeyDown}
+          spellCheck="false"
+          value={currentLine}
+        />
       </div>
       {completionOptions.length > 0 && (
         <div className="completion-menu">
@@ -891,7 +999,7 @@ function FileColumn({ label, active, items, selected, onSelect }) {
 
   useEffect(() => {
     const selectedItem = columnRef.current?.querySelector('.selected')
-    selectedItem?.scrollIntoView({ block: 'nearest' })
+    scrollChildIntoContainer(columnRef.current, selectedItem)
   }, [selected])
 
   return (
@@ -989,6 +1097,28 @@ function getCompletionCandidates(command, activeFolder) {
 function formatCompletion(cycle, option) {
   if (cycle.command) return `${cycle.command} ${option}`
   return `${cycle.hasLeadingSpace ? ' ' : ''}${option}${cycle.trailingSpace ? ' ' : ''}`
+}
+
+function scrollChildIntoContainer(container, child) {
+  if (!container || !child) return
+
+  const containerRect = container.getBoundingClientRect()
+  const childRect = child.getBoundingClientRect()
+
+  if (childRect.top < containerRect.top) {
+    container.scrollTop -= containerRect.top - childRect.top
+  } else if (childRect.bottom > containerRect.bottom) {
+    container.scrollTop += childRect.bottom - containerRect.bottom
+  }
+}
+
+function canScrollInDirection(element, deltaY) {
+  if (!element || element.scrollHeight <= element.clientHeight) return false
+
+  if (deltaY < 0) return element.scrollTop > 0
+  if (deltaY > 0) return element.scrollTop + element.clientHeight < element.scrollHeight - 1
+
+  return false
 }
 
 function clamp(value, min, max) {

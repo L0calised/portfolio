@@ -22,6 +22,13 @@ body,
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: auto;
+  overflow-anchor: none;
+  overscroll-behavior-y: auto;
 }
 
 button,
@@ -57,7 +64,7 @@ a:focus-visible {
   --text: #ffd08a;
   --hard: #ffb020;
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
   overflow: hidden;
   background:
     radial-gradient(circle at 65% 80%, rgba(255, 157, 0, 0.12), transparent 28%),
@@ -255,6 +262,7 @@ a:focus-visible {
   flex: 1;
   overflow: auto;
   padding: 14px;
+  overscroll-behavior: contain;
 }
 
 .shell-window .window-body {
@@ -264,16 +272,26 @@ a:focus-visible {
 
 .fastfetch {
   display: grid;
-  grid-template-columns: minmax(9rem, 12rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, clamp(9rem, 38%, 18rem)) minmax(0, 1fr);
   gap: 18px;
   align-items: start;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .fastfetch pre {
+  max-width: 100%;
+  max-height: min(34vh, 18rem);
   margin: 0;
+  overflow: hidden;
   color: var(--fg);
-  font-size: 13px;
-  line-height: 1.05;
+  font-size: clamp(8px, 0.78vw, 13px);
+  line-height: 1;
+  white-space: pre;
+}
+
+.fastfetch > div {
+  min-width: 0;
 }
 
 .info-row {
@@ -289,8 +307,10 @@ a:focus-visible {
 }
 
 .info-row b {
+  min-width: 0;
   color: var(--text);
   font-weight: 500;
+  overflow-wrap: anywhere;
 }
 
 .swatches {
@@ -326,6 +346,8 @@ a:focus-visible {
   margin: 18px 0 10px;
   border: 1px dashed color-mix(in srgb, var(--fg) 58%, transparent);
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: 10px 10px 0;
   background:
     linear-gradient(color-mix(in srgb, var(--fg) 4%, transparent) 1px, transparent 1px),
@@ -386,23 +408,21 @@ a:focus-visible {
   color: var(--hard);
 }
 
-.typed {
-  min-width: 1ch;
+.terminal-input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--text);
+  caret-color: var(--fg);
+  outline: 0;
+  padding: 0;
   white-space: pre;
 }
 
-.cursor {
-  width: 9px;
-  height: 18px;
-  background: var(--fg);
-  animation: blink 1s steps(1) infinite;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
+.terminal-input:focus {
+  outline: 0;
 }
 
 .file-manager {
@@ -424,6 +444,8 @@ a:focus-visible {
 .file-column {
   min-height: 0;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   font-size: 13px;
 }
 
@@ -453,6 +475,8 @@ a:focus-visible {
 
 .preview {
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .preview div {
@@ -479,7 +503,9 @@ a:focus-visible {
   gap: 8px;
   min-height: 0;
   overflow: auto;
-  padding-right: 4px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 0 4px 2px 0;
 }
 
 .meter {
@@ -489,6 +515,7 @@ a:focus-visible {
 .meter.selected {
   border-color: var(--hard);
   background: color-mix(in srgb, var(--fg) 18%, var(--bg));
+  box-shadow: inset 3px 0 0 var(--hard);
 }
 
 .meter-head {
@@ -519,6 +546,8 @@ a:focus-visible {
 .stat-detail {
   padding: 12px;
   overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .big-number {
@@ -541,6 +570,10 @@ a:focus-visible {
   color: var(--text);
   font-size: 13px;
   line-height: 1.5;
+}
+
+.stat-detail .stat-meta {
+  color: var(--muted);
 }
 
 .stat-detail a {
@@ -570,15 +603,54 @@ a:focus-visible {
 }
 
 @media (max-width: 980px) {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    overflow-x: hidden;
+  }
+
   .desktop {
-    overflow: auto;
+    min-height: 100dvh;
+    overflow: visible;
+    padding-bottom: 12px;
+    background:
+      linear-gradient(115deg, rgba(255, 157, 0, 0.06), transparent 42%),
+      var(--bg);
+  }
+
+  .theme-paper {
+    background:
+      linear-gradient(115deg, rgba(36, 34, 29, 0.06), transparent 46%),
+      var(--bg);
+  }
+
+  .desktop::before {
+    display: none;
+  }
+
+  .desktop::after {
+    display: none;
+  }
+
+  .matrix-rain {
+    display: none;
+  }
+
+  .top-bar,
+  .status-bar,
+  .terminal-window {
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+    backdrop-filter: none;
   }
 
   .top-bar {
     grid-template-columns: 1fr;
     height: auto;
+    margin: 8px;
     gap: 8px;
     padding: 10px;
+    font-size: 12px;
   }
 
   .top-bar .song,
@@ -590,8 +662,9 @@ a:focus-visible {
     grid-template-columns: 1fr;
     grid-template-rows: none;
     height: auto;
-    min-height: calc(100vh - 92px);
-    padding-bottom: 48px;
+    min-height: 0;
+    gap: 10px;
+    padding: 0 8px 8px;
   }
 
   .shell-window {
@@ -599,7 +672,7 @@ a:focus-visible {
   }
 
   .terminal-window {
-    min-height: 380px;
+    min-height: auto;
   }
 
   .file-manager,
@@ -608,14 +681,107 @@ a:focus-visible {
     grid-template-columns: 1fr;
   }
 
+  .window-title {
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .window-body {
+    padding: 10px;
+    overflow: visible;
+    overscroll-behavior: auto;
+  }
+
+  .fastfetch {
+    gap: 10px;
+  }
+
+  .fastfetch pre {
+    max-height: 30dvh;
+    font-size: clamp(7px, 2vw, 10px);
+  }
+
+  .hint-grid {
+    grid-template-columns: 1fr;
+    font-size: 11px;
+  }
+
+  .shell-output {
+    height: auto;
+    max-height: none;
+    min-height: 260px;
+    margin-top: 12px;
+    overflow: visible;
+    overscroll-behavior: auto;
+    font-size: 12px;
+  }
+
+  .prompt-line {
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 12px;
+  }
+
+  .prompt {
+    flex: 0 0 auto;
+  }
+
+  .terminal-input {
+    min-height: 24px;
+    font-size: 16px;
+  }
+
+  .file-manager,
+  .stats-layout {
+    min-height: 0;
+  }
+
+  .file-column,
+  .preview {
+    max-height: none;
+    overflow: visible;
+    overscroll-behavior: auto;
+  }
+
+  .meter-list,
+  .stat-detail {
+    max-height: 52dvh;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .shell-output,
+  .file-column,
+  .preview {
+    -webkit-overflow-scrolling: auto;
+    touch-action: auto;
+  }
+
+  .meter-list,
+  .stat-detail {
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .completion-menu {
+    grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr));
+    font-size: 12px;
+  }
+
   .status-bar {
-    position: fixed;
+    position: relative;
+    right: auto;
+    bottom: auto;
+    left: auto;
+    margin: 0 8px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    white-space: nowrap;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .matrix-rain span,
-  .cursor {
+  .matrix-rain span {
     animation: none;
   }
 }
