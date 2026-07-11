@@ -1,18 +1,39 @@
-# React + Vite
+# Divyansh Portfolio OS
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+One-page React portfolio with a terminal-desktop visual direction and live coding telemetry.
 
-Currently, two official plugins are available:
+## Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Command center with `help`, `search`, `filter`, `open`, `refresh`, `reset cache`, `theme`, and section jumps.
+- Live Codeforces, AtCoder, LeetCode, and GitHub telemetry.
+- Linked USACO account for `divyansh293`.
+- Combined yearly activity graph with platform filters.
+- Recent accepts and commits feed.
+- Local cache for the last successful telemetry response.
+- One-click telemetry cache reset from the dashboard and recovery screen.
+- Render recovery screen if a browser/runtime edge case occurs.
+- Project workbench, skill signals, and public profile links.
+- Amber and paper themes with `Ctrl+K`, `Alt+1` through `Alt+5`, and `Alt+T`.
 
-## React Compiler
+## Data Sources
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+- Codeforces official public API: `d1vyxn5h`
+- AtCoder Problems public API: `d1vyansh`
+- LeetCode community API: `d1vyan5h`
+- USACO linked account: `divyansh293`
+- GitHub official public API: `L0calised`
+- YouTube profile link: `localisedcharge`
 
-Note: This will impact Vite dev & build performances.
+## Run
 
-## Expanding the Oxlint configuration
+```sh
+npm install
+npm run dev
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Check
+
+```sh
+npm run lint
+npm run build
+```

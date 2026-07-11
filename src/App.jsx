@@ -1,1100 +1,1360 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-
-const panes = ['shell', 'files', 'stats']
-const commandNames = [
-  'help',
-  'about',
-  'projects',
-  'skills',
-  'contact',
-  'clear',
-  'theme',
-  'ls',
-  'cd',
-  'cat',
-  'pwd',
-  'whoami',
-  'fastfetch',
-  'stats',
-  'btop',
-  'yazi',
-  'files',
-  'history',
-  'open',
-]
-const openTargets = ['github', 'cf', 'lc', 'linkedin', 'neovim', 'linux', 'react', 'resume']
+import { Component, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import heroSlab from './assets/hero.png'
 
 const profile = {
-  user: 'cage',
+  handle: 'd1vyansh',
   host: 'archbox',
-  role: 'terminal-first developer',
-  wm: 'Hyprland',
-  shell: 'zsh',
-  terminal: "xterm-kitty",
-  editor: 'nvim',
-  uptime: '21 years',
-  palette: ['#f59e0b', '#f8fafc', '#171717', '#737373'],
+  name: 'Divyansh',
+  role: 'Linux-first developer and problem solver',
+  location: 'India',
+  status: 'Building fast interfaces, dotfiles, and a measurable problem-solving graph.',
+  links: [
+    { id: 'github', label: 'GitHub', href: 'https://github.com/L0calised' },
+    { id: 'codeforces', label: 'Codeforces', href: 'https://codeforces.com/profile/d1vyxn5h' },
+    { id: 'atcoder', label: 'AtCoder', href: 'https://atcoder.jp/users/d1vyansh' },
+    { id: 'leetcode', label: 'LeetCode', href: 'https://leetcode.com/u/d1vyan5h/' },
+    { id: 'usaco', label: 'USACO', href: 'https://usaco.org/' },
+    { id: 'youtube', label: 'YouTube', href: 'https://www.youtube.com/@localisedcharge' },
+  ],
 }
 
-const commandOutput = {
-  help: [
-    'movement',
-    '  alt+1/2/3        focus shell/files/stats',
-    '  alt+arrows       move between windows',
-    '',
-    'commands',
-    '  help             show this screen',
-    '  about            short intro',
-    '  projects         project list',
-    '  skills           stack list',
-    '  contact          contact links',
-    '  clear            clear terminal output',
-    '  theme            toggle amber/paper',
-    '  theme amber      switch to amber theme',
-    '  theme paper      switch to paper theme',
-    '  ls               list files in current yazi folder',
-    '  cd <folder>      jump yazi folder: ~, projects, notes',
-    '  cat <file>       print a file from yazi',
-    '  pwd              print current path',
-    '  whoami           print profile identity',
-    '  fastfetch        print system/profile summary',
-    '  stats | btop     print stat summary and focus btop',
-    '  yazi | files     focus file manager',
-    '  history          print command history',
-    '  open <target>    open github/cf/lc/linkedin/neovim/linux/react',
-    '',
-    'examples',
-    '  cd projects',
-    '  cat portfolio.term',
-    '  open github',
-    '  theme paper',
-    '',
-    'inside focused panes',
-    '  files: arrows or h/j/k/l browse folders and files',
-    '  stats: up/down select, right expand, left collapse, enter open',
-  ],
-  about: [
-    'I like compact interfaces, Linux desktops, fast tooling, and code that feels direct.',
-    'This portfolio is a browser page pretending to be a small tiling desktop.',
-  ],
-  projects: [
-    'hypr.portfolio       keyboard-first React portfolio',
-    'dotfiles             Hyprland, Waybar, tmux, nvim workflow',
-    'cp-notebook          algorithms and problem solving notes',
-  ],
-  skills: ['React', 'Tailwind CSS', 'Linux', 'C++', 'JavaScript', 'Neovim', 'Git'],
-  contact: [
-    'github    https://github.com/',
-    'leetcode  https://leetcode.com/',
-    'cf        https://codeforces.com/',
-    'mail      hello@example.com',
-  ],
-  fastfetch: [
-    `${profile.user}@${profile.host}`,
-    `role    ${profile.role}`,
-    `wm      ${profile.wm}`,
-    `shell   ${profile.shell}`,
-    `editor  ${profile.editor}`,
-    `uptime  ${profile.uptime}`,
-  ],
-  whoami: [`${profile.user} - ${profile.role}`],
-  pwd: ['~/portfolio'],
+const accounts = {
+  codeforces: 'd1vyxn5h',
+  atcoder: 'd1vyansh',
+  leetcode: 'd1vyan5h',
+  usaco: 'divyansh293',
+  github: 'L0calised',
+  youtube: 'localisedcharge',
 }
 
-const tree = [
+const projects = [
   {
-    name: '~',
+    id: 'portfolio-os',
+    title: 'Portfolio OS',
+    kind: 'React interface',
+    signal: 'Keyboard-first one-page portfolio with command routing, file preview, and live panels.',
+    impact: 'Turns the portfolio itself into a usable interface instead of a static resume page.',
+    stack: ['React', 'Vite', 'CSS', 'State machines'],
+    href: '#command',
     files: [
-      {
-        name: 'readme.md',
-        type: 'md',
-        body: [
-          '# cage',
-          'Developer profile in a terminal desktop.',
-          'Use Alt+2 for files and Alt+3 for stats. Plain arrows control the active window.',
-        ],
-      },
-      {
-        name: 'now.txt',
-        type: 'txt',
-        body: [
-          'Currently building a portfolio that looks less like a template and more like a daily-driver desktop.',
-          'The important part is the interaction model: no mouse required, no browser input trap.',
-        ],
-      },
+      ['README.md', 'One-page system interface with command search, section jumps, and working project panels.'],
+      ['commands.ts', 'help, search, open, theme, filter, refresh, clear, status'],
+      ['design.log', 'Amber terminal chrome, thin borders, dense data, and direct navigation.'],
     ],
   },
   {
-    name: 'projects',
+    id: 'dotfiles',
+    title: 'Hyprland Dotfiles',
+    kind: 'Linux workflow',
+    signal: 'Config-driven desktop: Hyprland, Waybar, tmux, zsh, Neovim, scripts.',
+    impact: 'Daily-driver environment optimized around fast navigation and readable configs.',
+    stack: ['Arch Linux', 'Hyprland', 'Lua', 'Shell'],
+    href: '#work',
     files: [
-      {
-        name: 'portfolio.term',
-        type: 'term',
-        body: [
-          'A Hyprland-inspired portfolio with real keyboard routing.',
-          'Shell is fake but stateful. File manager and stats pane are fully navigable.',
-        ],
-      },
-      {
-        name: 'dotfiles.rice',
-        type: 'rice',
-        body: [
-          'Hyprland + Waybar + tmux + nvim + zsh.',
-          'Suckless-inspired: small pieces, readable configs, no unnecessary animation.',
-        ],
-      },
-      {
-        name: 'algorithms.cpp',
-        type: 'cpp',
-        body: [
-          'Codeforces and LeetCode progress belongs here.',
-          'Replace placeholder ratings with API-backed stats later if you want live data.',
-        ],
-      },
-      {
-        name: 'terminal-ui.jsx',
-        type: 'jsx',
-        body: [
-          'Keyboard routing lives in React state instead of browser inputs.',
-          'That keeps Alt navigation reliable and lets arrows belong to the active terminal.',
-        ],
-      },
-      {
-        name: 'rice-gallery.md',
-        type: 'md',
-        body: [
-          'Visual direction: old amber terminals, paper desktops, thin borders, dense but readable panels.',
-          'Next strong move: add screenshots or generated bitmap backdrops that feel personal.',
-        ],
-      },
+      ['hyprland.conf', 'Tiling workflow, keybinds, monitor rules, launcher and system scripts.'],
+      ['waybar.css', 'Compact status bar with dense system signals.'],
+      ['nvim.lua', 'Small plugin set, fast editing path, terminal-friendly defaults.'],
     ],
   },
   {
-    name: 'notes',
+    id: 'cp-notebook',
+    title: 'CP Notebook',
+    kind: 'Algorithms',
+    signal: 'Structured notes for patterns, contest review, and C++ templates.',
+    impact: 'Makes practice measurable: solved logs, weak-topic queues, reusable snippets.',
+    stack: ['C++', 'STL', 'Graphs', 'DP'],
+    href: '#work',
     files: [
-      {
-        name: 'design.txt',
-        type: 'txt',
-        body: [
-          'Pitch black background, amber window chrome, dense text, small status bars.',
-          'Inspired by old Unix themes, terminal file managers, and clean unixporn desktops.',
-        ],
-      },
-      {
-        name: 'todo.md',
-        type: 'md',
-        body: [
-          '- replace placeholder links',
-          '- add real profile text',
-          '- decide whether stats should be static JSON or fetched from APIs',
-          '- add a light paper theme variant if needed',
-        ],
-      },
-      {
-        name: 'commands.txt',
-        type: 'txt',
-        body: [
-          'help, ls, cd, cat, pwd, whoami, fastfetch, stats, projects, skills, contact, theme, clear, history, open',
-          'Examples: cd projects, cat portfolio.term, open github, theme paper',
-        ],
-      },
+      ['graphs.cpp', 'BFS, DFS, shortest paths, DSU, topological ordering.'],
+      ['dp.md', 'State definitions, transitions, tabulation notes, revision queue.'],
+      ['contest.log', 'After-contest review format with misses and next drills.'],
+    ],
+  },
+  {
+    id: 'terminal-tools',
+    title: 'Terminal Tools',
+    kind: 'Small utilities',
+    signal: 'Scripts and compact tools for local workflow automation.',
+    impact: 'Cuts repetitive setup and keeps the desktop predictable.',
+    stack: ['Shell', 'Node', 'Git', 'CLI UX'],
+    href: '#work',
+    files: [
+      ['bootstrap.sh', 'Install and link common tools with explicit, readable steps.'],
+      ['notes-sync.js', 'Keeps notes and project references easy to find.'],
+      ['checks.sh', 'Local quality checks before pushing a change.'],
     ],
   },
 ]
 
-const stats = [
-  {
-    name: 'Codeforces',
-    value: 68,
-    meta: 'rating: 1159 | solved: 240',
-    href: 'https://codeforces.com/',
-    lines: ['graphs + dp improving', 'contest rhythm: rebuilding', 'next target: specialist'],
-  },
-  {
-    name: 'LeetCode',
-    value: 61,
-    meta: 'solved: 310 | streak: 17',
-    href: 'https://leetcode.com/',
-    lines: ['arrays, trees, binary search', 'systematic revision queue', 'weekly contests tracked'],
-  },
-  {
-    name: 'GitHub',
-    value: 76,
-    meta: 'repos: 28 | commits: active',
-    href: 'https://github.com/',
-    lines: ['dotfiles and small tools', 'portfolio experiments', 'clean public project readmes'],
-  },
-  {
-    name: 'LinkedIn',
-    value: 42,
-    meta: 'profile: draft',
-    href: 'https://linkedin.com/',
-    lines: ['needs final copy', 'add project screenshots', 'link resume when ready'],
-  },
-  {
-    name: 'Neovim',
-    value: 79,
-    meta: 'daily driver | lua config',
-    href: 'https://neovim.io/',
-    lines: ['fast editing workflow', 'tmux-friendly layout', 'plugins kept intentionally small'],
-  },
-  {
-    name: 'Linux',
-    value: 84,
-    meta: 'arch | hyprland | zsh',
-    href: 'https://wiki.archlinux.org/',
-    lines: ['desktop workflow as portfolio language', 'shell scripts and dotfiles', 'keyboard-first habits'],
-  },
-  {
-    name: 'React',
-    value: 70,
-    meta: 'stateful UI | keyboard apps',
-    href: 'https://react.dev/',
-    lines: ['component-driven interfaces', 'state machines for interactions', 'Tailwind for fast styling'],
-  },
-  {
-    name: 'Resume',
-    value: 35,
-    meta: 'draft | needs final PDF',
-    href: '#',
-    lines: ['add PDF later', 'turn projects into concise impact bullets', 'link from shell command once ready'],
-  },
+const skills = [
+  { name: 'React', level: 82, note: 'Stateful interfaces, keyboard UX, component systems' },
+  { name: 'Linux', level: 88, note: 'Arch, Hyprland, shell workflows, desktop tooling' },
+  { name: 'C++', level: 74, note: 'DSA practice, contest templates, STL fluency' },
+  { name: 'JavaScript', level: 80, note: 'Browser APIs, data-driven UI, Vite apps' },
+  { name: 'Neovim', level: 86, note: 'Lua config, fast editing loops, terminal habits' },
+  { name: 'Git', level: 78, note: 'Clean diffs, focused commits, readable history' },
 ]
 
-const paneMap = {
-  shell: { left: 'shell', right: 'files', up: 'shell', down: 'shell' },
-  files: { left: 'shell', right: 'files', up: 'files', down: 'stats' },
-  stats: { left: 'shell', right: 'stats', up: 'files', down: 'stats' },
+const logs = [
+  'boot portfolio-os: ready',
+  'loaded workspace: one-page terminal desktop',
+  'mounted real command router: help/search/open/filter/theme/refresh',
+  'synced project browser with portfolio data',
+]
+
+const commands = [
+  'help',
+  'about',
+  'work',
+  'skills',
+  'solving',
+  'contact',
+  'status',
+  'projects',
+  'refresh',
+  'reset cache',
+  'search',
+  'filter',
+  'open',
+  'theme',
+  'clear',
+]
+
+const sections = ['home', 'solving', 'work', 'skills', 'contact']
+
+const platformMeta = {
+  all: { label: 'All', short: 'all' },
+  codeforces: { label: 'Codeforces', short: 'CF' },
+  atcoder: { label: 'AtCoder', short: 'AC' },
+  leetcode: { label: 'LeetCode', short: 'LC' },
+  usaco: { label: 'USACO', short: 'US' },
+  github: { label: 'GitHub', short: 'GH' },
 }
 
-const bootLines = [
-  `${profile.user}@${profile.host}`,
-  `role    ${profile.role}`,
-  `wm      ${profile.wm}`,
-  `shell   ${profile.shell}`,
-  `editor  ${profile.editor}`,
-  '',
-  'movement: alt+1/2/3 or alt+arrows',
-  'local: files/stats use arrows or h/j/k/l',
-  'try: help, ls, cd projects, cat portfolio.term, stats, theme',
-]
-const shellPrompt = `[${profile.user}@${profile.host} ~]$`
+const currentYear = new Date().getUTCFullYear()
+const cacheKey = 'portfolio-solving-cache-v1'
 
 function App() {
-  const [focusedPane, setFocusedPane] = useState('shell')
-  const [line, setLine] = useState('')
-  const [output, setOutput] = useState(bootLines)
-  const [completionOptions, setCompletionOptions] = useState([])
-  const [completionCycle, setCompletionCycle] = useState(null)
-  const [history, setHistory] = useState([])
-  const [historyIndex, setHistoryIndex] = useState(null)
-  const [folderIndex, setFolderIndex] = useState(0)
-  const [fileIndex, setFileIndex] = useState(0)
-  const [fileColumn, setFileColumn] = useState('folders')
-  const [statIndex, setStatIndex] = useState(0)
-  const [expandedStat, setExpandedStat] = useState(0)
+  return (
+    <ErrorBoundary>
+      <PortfolioApp />
+    </ErrorBoundary>
+  )
+}
+
+function PortfolioApp() {
   const [theme, setTheme] = useState('amber')
-  const meterListRef = useRef(null)
-  const inputRef = useRef(null)
+  const [activeSection, setActiveSection] = useState('home')
+  const [selectedProjectId, setSelectedProjectId] = useState(projects[0].id)
+  const [selectedFileIndex, setSelectedFileIndex] = useState(0)
+  const [skillIndex, setSkillIndex] = useState(0)
+  const [platformFilter, setPlatformFilter] = useState('all')
+  const [solvingData, setSolvingData] = useState(() => readCachedSolvingData() ?? createEmptySolvingData())
+  const [query, setQuery] = useState('')
+  const [command, setCommand] = useState('')
+  const [history, setHistory] = useState(logs)
+  const [clock, setClock] = useState(() => new Date())
+  const commandRef = useRef(null)
+  const didInitialRefresh = useRef(false)
 
-  const activeFolder = tree[folderIndex]
-  const activeFile = activeFolder.files[Math.min(fileIndex, activeFolder.files.length - 1)]
-  const activeStat = stats[statIndex]
-  const completeLine = useCallback((currentLine) => {
-    const cycleMatch = completionCycle?.options.some(
-      (option) => formatCompletion(completionCycle, option) === currentLine,
-    )
-    const baseLine = cycleMatch ? completionCycle.baseLine : currentLine
-    const normalizedLine = baseLine.trimStart()
-    const hasLeadingSpace = baseLine.length !== normalizedLine.length
-    const parts = normalizedLine.split(/\s+/)
-    const command = parts[0] ?? ''
-    const partial = parts.slice(1).join(' ')
+  const selectedProject = projects.find((project) => project.id === selectedProjectId) ?? projects[0]
+  const selectedFile = selectedProject.files[Math.min(selectedFileIndex, selectedProject.files.length - 1)]
+  const filteredProjects = useMemo(() => filterProjects(query), [query])
+  const searchHits = useMemo(() => buildSearchHits(query), [query])
+  const visibleActivity = useMemo(
+    () => filterActivity(solvingData.activity, platformFilter),
+    [platformFilter, solvingData.activity],
+  )
+  const progress = useMemo(() => buildProgress(visibleActivity), [visibleActivity])
+  const solvingSummary = useMemo(() => summarizeSolving(solvingData), [solvingData])
+  const recentActivity = useMemo(
+    () => filterRecent(solvingData.recent, platformFilter),
+    [platformFilter, solvingData.recent],
+  )
 
-    if (!normalizedLine) {
-      setCompletionOptions([])
-      setCompletionCycle(null)
-      return baseLine
+  const appendHistory = useCallback((line) => {
+    setHistory((items) => [...items.slice(-9), line])
+  }, [])
+
+  const refreshSolving = useCallback(async () => {
+    setSolvingData((current) => ({ ...current, loading: true }))
+    appendHistory('refreshing live solving telemetry')
+    try {
+      const nextData = await fetchSolvingData()
+      writeCachedSolvingData(nextData)
+      setSolvingData(nextData)
+      appendHistory(`telemetry updated: ${nextData.updatedAt.toLocaleTimeString([], {
+        hour: '2-digit',
+        minute: '2-digit',
+      })}`)
+    } catch {
+      setSolvingData((current) => ({ ...current, loading: false }))
+      appendHistory('telemetry refresh failed; showing cached data')
     }
+  }, [appendHistory])
 
-    if (parts.length === 1) {
-      const matches = commandNames.filter((item) => item.startsWith(command.toLowerCase()))
+  const resetSolvingCache = useCallback(async () => {
+    clearSolvingCache()
+    setSolvingData(createEmptySolvingData())
+    appendHistory('telemetry cache cleared')
+    await refreshSolving()
+  }, [appendHistory, refreshSolving])
 
-      if (matches.length === 1) {
-        setCompletionOptions([])
-        setCompletionCycle(null)
-        return `${hasLeadingSpace ? ' ' : ''}${matches[0]} `
-      }
-      if (matches.length > 1) {
-        const nextIndex = cycleMatch ? (completionCycle.index + 1) % matches.length : 0
-        const nextCycle = {
-          baseLine,
-          command: '',
-          hasLeadingSpace,
-          index: nextIndex,
-          options: matches,
-          trailingSpace: true,
-        }
-        setCompletionOptions(matches)
-        setCompletionCycle(nextCycle)
-        return formatCompletion(nextCycle, matches[nextIndex])
-      }
-      setCompletionOptions([])
-      setCompletionCycle(null)
-      return baseLine
-    }
+  const jumpTo = useCallback((id) => {
+    const section = document.getElementById(id)
+    if (!section) return false
+    section.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setActiveSection(id)
+    return true
+  }, [])
 
-    const candidates = getCompletionCandidates(command, activeFolder)
-    const matches = candidates.filter((item) => item.toLowerCase().startsWith(partial.toLowerCase()))
+  const runCommand = useCallback(async (rawValue = command) => {
+    const value = rawValue.trim()
+    if (!value) return
 
-    if (matches.length === 1) {
-      setCompletionOptions([])
-      setCompletionCycle(null)
-      return `${command} ${matches[0]}`
-    }
-    if (matches.length > 1) {
-      const nextIndex = cycleMatch ? (completionCycle.index + 1) % matches.length : 0
-      const nextCycle = {
-        baseLine,
-        command,
-        hasLeadingSpace: false,
-        index: nextIndex,
-        options: matches,
-        trailingSpace: false,
-      }
-      setCompletionOptions(matches)
-      setCompletionCycle(nextCycle)
-      return formatCompletion(nextCycle, matches[nextIndex])
-    }
-    setCompletionOptions([])
-    setCompletionCycle(null)
-    return baseLine
-  }, [activeFolder, completionCycle])
-
-  const runCommand = useCallback((rawCommand) => {
-    const input = rawCommand.trim()
-    if (!input) return
-
-    const [cmd, ...args] = input.toLowerCase().split(/\s+/)
-    const arg = args.join(' ')
-    const submitted = `${shellPrompt} ${input}`
-    setCompletionOptions([])
-    setCompletionCycle(null)
-    setHistory((items) => [...items, input])
-    setHistoryIndex(null)
+    const [cmd, ...rest] = value.toLowerCase().split(/\s+/)
+    const arg = rest.join(' ')
+    appendHistory(`[${profile.handle}@${profile.host}]$ ${value}`)
+    setCommand('')
 
     if (cmd === 'clear') {
-      setOutput([])
+      setHistory([])
+      return
+    }
+
+    if (cmd === 'help') {
+      appendHistory(`commands: ${commands.join(', ')}`)
+      return
+    }
+
+    if (cmd === 'about' || cmd === 'status') {
+      appendHistory(`${profile.role} - ${profile.status}`)
+      setActiveSection('home')
+      return
+    }
+
+    if (sections.includes(cmd)) {
+      jumpTo(cmd)
+      appendHistory(`opened section: ${cmd}`)
+      return
+    }
+
+    if (cmd === 'projects' || cmd === 'work') {
+      jumpTo('work')
+      appendHistory(`${projects.length} projects loaded`)
+      return
+    }
+
+    if (cmd === 'refresh') {
+      await refreshSolving()
+      return
+    }
+
+    if (cmd === 'reset' && arg === 'cache') {
+      await resetSolvingCache()
+      return
+    }
+
+    if (cmd === 'skills') {
+      jumpTo('skills')
+      appendHistory(`${skills.length} skill meters loaded`)
+      return
+    }
+
+    if (cmd === 'contact') {
+      jumpTo('contact')
+      appendHistory('contact: github, codeforces, atcoder, leetcode, youtube')
       return
     }
 
     if (cmd === 'theme') {
-      if (arg === 'amber' || arg === 'paper') {
-        setTheme(arg)
-        setOutput((items) => [...items, submitted, `theme set to ${arg}`])
-        return
-      }
-
-      setTheme((current) => {
-        const next = current === 'amber' ? 'paper' : 'amber'
-        setOutput((items) => [...items, submitted, `theme set to ${next}`])
-        return next
-      })
+      const next = arg === 'paper' || arg === 'amber' ? arg : theme === 'amber' ? 'paper' : 'amber'
+      setTheme(next)
+      appendHistory(`theme set to ${next}`)
       return
     }
 
-    if (cmd === 'focus' && panes.includes(arg)) {
-      setFocusedPane(arg)
-      setOutput((items) => [...items, submitted, `focused ${arg}`])
+    if (cmd === 'search' || cmd === 'filter') {
+      setQuery(arg)
+      if (platformMeta[arg]) setPlatformFilter(arg)
+      appendHistory(arg ? `searching portfolio for "${arg}"` : 'search cleared')
       return
     }
 
     if (cmd === 'open') {
-      const target = findStat(arg)
-      if (target) {
-        if (target.href !== '#') window.open(target.href, '_blank', 'noopener,noreferrer')
-        setOutput((items) => [...items, submitted, `opening ${target.name}`])
+      const target = findTarget(arg)
+      if (!target) {
+        appendHistory(`open: unknown target "${arg || '<empty>'}"`)
         return
       }
-    }
-
-    if (cmd === 'ls') {
-      setOutput((items) => [
-        ...items,
-        submitted,
-        ...activeFolder.files.map((file) => `${file.name.padEnd(18)} ${file.type}`),
-      ])
-      return
-    }
-
-    if (cmd === 'cd') {
-      const nextFolder = !arg || arg === '~'
-        ? 0
-        : tree.findIndex((folder) => folder.name.toLowerCase() === arg || `~/${folder.name}` === arg)
-      if (nextFolder >= 0) {
-        setFolderIndex(nextFolder)
-        setFileIndex(0)
-        setFileColumn('files')
-        setFocusedPane('files')
-        setOutput((items) => [...items, submitted, `~/portfolio/${tree[nextFolder].name}`])
+      if (target.type === 'project') {
+        setSelectedProjectId(target.project.id)
+        setSelectedFileIndex(0)
+        jumpTo('work')
+        appendHistory(`selected project: ${target.project.title}`)
         return
       }
-
-      setOutput((items) => [...items, submitted, `cd: no such folder: ${arg || '<empty>'}`])
-      return
-    }
-
-    if (cmd === 'cat') {
-      const file = tree.flatMap((folder) => folder.files).find((item) => item.name.toLowerCase() === arg)
-      if (file) {
-        setOutput((items) => [...items, submitted, ...file.body])
+      if (target.type === 'section') {
+        jumpTo(target.id)
+        appendHistory(`opened section: ${target.id}`)
         return
       }
-
-      setOutput((items) => [...items, submitted, `cat: no such file: ${arg || '<empty>'}`])
+      window.open(target.href, '_blank', 'noopener,noreferrer')
+      appendHistory(`opened ${target.label}`)
       return
     }
 
-    if (cmd === 'stats' || cmd === 'btop') {
-      setFocusedPane('stats')
-      setOutput((items) => [
-        ...items,
-        submitted,
-        ...stats.map((item) => `${item.name.padEnd(12)} ${String(item.value).padStart(3)}%  ${item.meta}`),
-      ])
-      return
-    }
+    appendHistory(`command not found: ${cmd}. try help`)
+  }, [appendHistory, command, jumpTo, refreshSolving, resetSolvingCache, theme])
 
-    if (cmd === 'yazi' || cmd === 'files') {
-      setFocusedPane('files')
-      setOutput((items) => [...items, submitted, 'focused files'])
-      return
-    }
-
-    if (cmd === 'history') {
-      setOutput((items) => [...items, submitted, ...history.map((item, index) => `${index + 1}  ${item}`)])
-      return
-    }
-
-    setOutput((items) => [
-      ...items,
-      submitted,
-      ...(commandOutput[cmd] ?? [`command not found: ${cmd}`, 'try `help`']),
-    ])
-  }, [activeFolder.files, history])
-
-  const moveFiles = useCallback((direction) => {
-    if (direction === 'left') {
-      setFileColumn('folders')
-      return
-    }
-
-    if (direction === 'right') {
-      setFileColumn('files')
-      return
-    }
-
-    if (fileColumn === 'folders') {
-      setFolderIndex((current) => {
-        const next = clamp(current + (direction === 'down' ? 1 : -1), 0, tree.length - 1)
-        setFileIndex(0)
-        return next
-      })
-      return
-    }
-
-    setFileIndex((current) => (
-      clamp(current + (direction === 'down' ? 1 : -1), 0, activeFolder.files.length - 1)
-    ))
-  }, [activeFolder.files.length, fileColumn])
-
-  const moveStats = useCallback((direction) => {
-    if (direction === 'up' || direction === 'down') {
-      setStatIndex((current) => {
-        const next = clamp(current + (direction === 'down' ? 1 : -1), 0, stats.length - 1)
-        setExpandedStat((expanded) => (expanded === null ? null : next))
-        return next
-      })
-      return
-    }
-
-    if (direction === 'right') setExpandedStat(statIndex)
-    if (direction === 'left') setExpandedStat(null)
-  }, [statIndex])
-
-  const handleShellKey = useCallback((event) => {
-    if (event.key === 'Tab') {
-      event.preventDefault()
-      setLine((value) => completeLine(value))
-      return
-    }
-
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      runCommand(line)
-      setLine('')
-      setCompletionOptions([])
-      setCompletionCycle(null)
-      return
-    }
-
-    if (event.key === 'Backspace') {
-      event.preventDefault()
-      setCompletionOptions([])
-      setCompletionCycle(null)
-      setLine((value) => value.slice(0, -1))
-      return
-    }
-
-    if (event.key === 'ArrowUp') {
-      event.preventDefault()
-      if (!history.length) return
-      setCompletionOptions([])
-      setCompletionCycle(null)
-      setHistoryIndex((current) => {
-        const next = current === null ? history.length - 1 : clamp(current - 1, 0, history.length - 1)
-        setLine(history[next])
-        return next
-      })
-      return
-    }
-
-    if (event.key === 'ArrowDown') {
-      event.preventDefault()
-      if (historyIndex === null) return
-      setCompletionOptions([])
-      setCompletionCycle(null)
-      const next = historyIndex + 1
-      if (next >= history.length) {
-        setHistoryIndex(null)
-        setLine('')
-        return
-      }
-      setHistoryIndex(next)
-      setLine(history[next])
-      return
-    }
-
-    if (event.key.length === 1 && !event.altKey && !event.metaKey && !event.ctrlKey) {
-      event.preventDefault()
-      setCompletionOptions([])
-      setCompletionCycle(null)
-      setLine((value) => `${value}${event.key}`)
-    }
-  }, [completeLine, history, historyIndex, line, runCommand])
-
-  const handleInputKeyDown = useCallback((event) => {
-    if (event.key === 'Tab' || event.key === 'Enter' || event.key === 'ArrowUp' || event.key === 'ArrowDown') {
-      handleShellKey(event)
-      return
-    }
-
-    if (event.key === 'Backspace' || event.key === 'Delete') {
-      setCompletionOptions([])
-      setCompletionCycle(null)
-    }
-  }, [handleShellKey])
-
-  const handleInputChange = useCallback((event) => {
-    setCompletionOptions([])
-    setCompletionCycle(null)
-    setLine(event.target.value)
-  }, [])
-
-  useLayoutEffect(() => {
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual'
-    }
-
-    const resetScroll = () => {
-      window.scrollTo(0, 0)
-      document.documentElement.scrollTop = 0
-      document.body.scrollTop = 0
-    }
-
-    resetScroll()
-    requestAnimationFrame(resetScroll)
-    const timeout = window.setTimeout(resetScroll, 120)
-    const lateTimeout = window.setTimeout(resetScroll, 450)
-    window.addEventListener('pageshow', resetScroll)
-
-    return () => {
-      window.clearTimeout(timeout)
-      window.clearTimeout(lateTimeout)
-      window.removeEventListener('pageshow', resetScroll)
-    }
+  useEffect(() => {
+    const timer = window.setInterval(() => setClock(new Date()), 1000)
+    return () => window.clearInterval(timer)
   }, [])
 
   useEffect(() => {
-    const selectedMeter = meterListRef.current?.querySelector('.meter.selected')
-    scrollChildIntoContainer(meterListRef.current, selectedMeter)
-  }, [statIndex])
+    if (!didInitialRefresh.current) {
+      didInitialRefresh.current = true
+      refreshSolving()
+    }
+    const timer = window.setInterval(refreshSolving, 5 * 60 * 1000)
+    return () => window.clearInterval(timer)
+  }, [refreshSolving])
 
   useEffect(() => {
     const onKeyDown = (event) => {
       if (event.defaultPrevented) return
-
-      const arrowDirection = getArrowDirection(event.key)
-      const localDirection = getLocalDirection(event.key)
-      const isPromptInput = event.target === inputRef.current
-
-      if (event.key === 'Tab') {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
-        if (focusedPane === 'shell') handleShellKey(event)
+        commandRef.current?.focus()
         return
       }
-
-      if (event.altKey && event.key >= '1' && event.key <= '3') {
+      if (event.altKey && event.key >= '1' && event.key <= String(sections.length)) {
         event.preventDefault()
-        setFocusedPane(panes[Number(event.key) - 1])
+        jumpTo(sections[Number(event.key) - 1])
         return
       }
-
-      if (event.altKey && arrowDirection) {
+      if (event.altKey && event.key.toLowerCase() === 't') {
         event.preventDefault()
-        setFocusedPane((pane) => paneMap[pane][arrowDirection])
-        return
-      }
-
-      if (event.altKey && event.key.toLowerCase() === 'o' && focusedPane === 'stats') {
-        event.preventDefault()
-        if (activeStat.href !== '#') window.open(activeStat.href, '_blank', 'noopener,noreferrer')
-        return
-      }
-
-      if (isPromptInput) return
-
-      if (focusedPane === 'shell') {
-        handleShellKey(event)
-        return
-      }
-
-      if (focusedPane === 'files' && localDirection) {
-        event.preventDefault()
-        moveFiles(localDirection)
-        return
-      }
-
-      if (focusedPane === 'stats' && localDirection) {
-        event.preventDefault()
-        moveStats(localDirection)
-        return
-      }
-
-      if (focusedPane === 'stats' && event.key === 'Enter') {
-        event.preventDefault()
-        if (activeStat.href !== '#') window.open(activeStat.href, '_blank', 'noopener,noreferrer')
+        setTheme((current) => (current === 'amber' ? 'paper' : 'amber'))
       }
     }
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [activeStat.href, focusedPane, handleShellKey, moveFiles, moveStats])
-
-  const desktopClass = theme === 'amber' ? 'theme-amber' : 'theme-paper'
+  }, [jumpTo])
 
   return (
-    <main className={`desktop ${desktopClass}`}>
-      <MatrixRain />
-      <TopBar focusedPane={focusedPane} theme={theme} onFocus={setFocusedPane} />
+    <main className={`site theme-${theme}`}>
+      <BackgroundGrid />
+      <Header
+        activeSection={activeSection}
+        clock={clock}
+        onCommandFocus={() => commandRef.current?.focus()}
+        onTheme={() => setTheme((current) => (current === 'amber' ? 'paper' : 'amber'))}
+        onJump={jumpTo}
+        theme={theme}
+      />
 
-      <section className="workspace" aria-label="Terminal portfolio workspace">
-        <TerminalWindow
-          pane="shell"
-          title="fastfetch.sh"
-          focusedPane={focusedPane}
-          className="shell-window"
-          onFocus={setFocusedPane}
-        >
-          <Fastfetch />
-          <div className="terminal-divider" />
-          <div className="hint-grid">
-            <span>alt+1 shell</span>
-            <span>alt+2 files</span>
-            <span>alt+3 stats</span>
-            <span>alt+arrows move</span>
-            <span>theme</span>
-            <span>help</span>
+      <section className="hero-shell section" id="home">
+        <div className="hero-copy">
+          <p className="kicker">d1vyansh@archbox:~/portfolio</p>
+          <h1>Divyansh builds terminal-grade systems.</h1>
+          <p className="hero-text">
+            I build compact interfaces and keep my problem-solving progress live:
+            Codeforces, AtCoder, LeetCode, and GitHub activity combined into one signal.
+          </p>
+          <div className="hero-actions">
+            <button type="button" onClick={() => jumpTo('solving')}>Live stats</button>
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => window.open(profile.links[0].href, '_blank', 'noopener,noreferrer')}
+            >
+              Open GitHub
+            </button>
           </div>
-          <ShellOutput
-            lines={output}
-            currentLine={line}
-            completionOptions={completionOptions}
-            completionIndex={completionCycle?.index ?? null}
-            inputRef={inputRef}
-            onInputChange={handleInputChange}
-            onInputKeyDown={handleInputKeyDown}
-            onInputFocus={() => setFocusedPane('shell')}
-          />
-        </TerminalWindow>
+        </div>
 
-        <TerminalWindow
-          pane="files"
-          title="yazi ~/portfolio"
-          focusedPane={focusedPane}
-          className="files-window"
-          onFocus={setFocusedPane}
-        >
-          <div className="file-manager">
-            <FileColumn
-              label="places"
-              active={focusedPane === 'files' && fileColumn === 'folders'}
-              items={tree.map((folder) => folder.name)}
-              selected={folderIndex}
-              onSelect={(index) => {
-                setFolderIndex(index)
-                setFileIndex(0)
-                setFileColumn('folders')
-              }}
-            />
-            <FileColumn
-              label={activeFolder.name}
-              active={focusedPane === 'files' && fileColumn === 'files'}
-              items={activeFolder.files.map((file) => `${file.name}  ${file.type}`)}
-              selected={fileIndex}
-              onSelect={(index) => {
-                setFileIndex(index)
-                setFileColumn('files')
-              }}
-            />
-            <article className="preview">
-              <header>{activeFile.name}</header>
-              <div>
-                {activeFile.body.map((item) => (
-                  <p key={item}>{item}</p>
-                ))}
-              </div>
-            </article>
-          </div>
-        </TerminalWindow>
-
-        <TerminalWindow
-          pane="stats"
-          title="btop --profile"
-          focusedPane={focusedPane}
-          className="stats-window"
-          onFocus={setFocusedPane}
-        >
-          <div className="stats-layout">
-            <section className="meter-list" ref={meterListRef}>
-              {stats.map((item, index) => (
-                <div
-                  key={item.name}
-                  className={`meter ${index === statIndex ? 'selected' : ''}`}
-                  onClick={() => {
-                    setStatIndex(index)
-                    setExpandedStat(index)
-                  }}
-                >
-                  <div className="meter-head">
-                    <span>{item.name}</span>
-                    <span>{item.value}%</span>
-                  </div>
-                  <div className="meter-track">
-                    <span style={{ width: `${item.value}%` }} />
-                  </div>
-                  <small>{item.meta}</small>
-                </div>
-              ))}
-            </section>
-            <section className="stat-detail">
-              {expandedStat === null ? (
-                <p>right arrow expands the selected row</p>
-              ) : (
-                <div key={expandedStat}>
-                  <div className="big-number">{stats[expandedStat].value}</div>
-                  <h2>{stats[expandedStat].name}</h2>
-                  <p className="stat-meta">{stats[expandedStat].meta}</p>
-                  {stats[expandedStat].lines.map((item) => (
-                    <p key={item}>- {item}</p>
-                  ))}
-                  <a href={stats[expandedStat].href} target="_blank" rel="noreferrer" tabIndex={-1}>
-                    open with enter / alt+o
-                  </a>
-                </div>
-              )}
-            </section>
-          </div>
-        </TerminalWindow>
+        <CommandCenter
+          command={command}
+          commandRef={commandRef}
+          history={history}
+          onCommand={setCommand}
+          onRun={runCommand}
+          query={query}
+          searchHits={searchHits}
+          setQuery={setQuery}
+        />
       </section>
 
-      <footer className="status-bar">
-        <span>HYPRLAND</span>
-        <span>ALT SWITCHES WINDOWS</span>
-        <span>ARROWS NAVIGATE ACTIVE TERMINAL</span>
-      </footer>
+      <section className="solving-section section" id="solving">
+        <SectionTitle
+          eyebrow="live telemetry"
+          title="Problem-solving graph pulled from real profiles."
+          text="The dashboard combines public Codeforces, AtCoder, LeetCode, and GitHub signals, then refreshes quietly in the background."
+        />
+        <SolvingDashboard
+          filter={platformFilter}
+          progress={progress}
+          setFilter={setPlatformFilter}
+          solvingData={solvingData}
+          solvingSummary={solvingSummary}
+          visibleActivity={visibleActivity}
+          recentActivity={recentActivity}
+          onRefresh={refreshSolving}
+          onResetCache={resetSolvingCache}
+        />
+      </section>
+
+      <section className="workbench section" id="work">
+        <SectionTitle
+          eyebrow="workbench"
+          title="Projects with real browsing, not static cards."
+          text="Selecting a project updates the file preview, stack, and detail panel from one shared source of truth. Larp larp sahur."
+        />
+        <div className="work-grid">
+          <ProjectList
+            filteredProjects={filteredProjects}
+            selectedProjectId={selectedProjectId}
+            setQuery={setQuery}
+            setSelectedFileIndex={setSelectedFileIndex}
+            setSelectedProjectId={setSelectedProjectId}
+          />
+          <FileBrowser
+            selectedFile={selectedFile}
+            selectedFileIndex={selectedFileIndex}
+            selectedProject={selectedProject}
+            setSelectedFileIndex={setSelectedFileIndex}
+          />
+          <ProjectDetail project={selectedProject} />
+        </div>
+      </section>
+
+      <section className="skills-section section" id="skills">
+          <SectionTitle
+            eyebrow="stack telemetry"
+            title="Skill meters tuned for the work I actually do."
+            text="Each signal maps to a practical working habit: building interfaces, using Linux well, and improving through contests. TBH its all bullshit, these are just random numbers "
+        />
+        <div className="skills-grid">
+          <div className="skill-list">
+            {skills.map((skill, index) => (
+              <button
+                className={index === skillIndex ? 'skill selected' : 'skill'}
+                key={skill.name}
+                type="button"
+                onClick={() => setSkillIndex(index)}
+              >
+                <span>{skill.name}</span>
+                <b>{skill.level}%</b>
+                <i><span style={{ width: `${skill.level}%` }} /></i>
+              </button>
+            ))}
+          </div>
+          <article className="skill-detail">
+            <p className="large-number">{skills[skillIndex].level}</p>
+            <h3>{skills[skillIndex].name}</h3>
+            <p>{skills[skillIndex].note}</p>
+            <div className="signal-row">
+              <span>focus</span>
+              <b>{profile.status}</b>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section className="contact-section section" id="contact">
+        <div className="contact-panel">
+          <SectionTitle
+            eyebrow="contact"
+            title="Profiles, streams, and code activity."
+            text="These are the public accounts wired into the live dashboard and command center."
+          />
+          <div className="link-grid">
+            {profile.links.map((link) => (
+              <a href={link.href} key={link.id} rel="noreferrer" target="_blank">
+                <span>{link.label}</span>
+                <b>{link.id}</b>
+              </a>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="primary-link"
+            onClick={() => window.open(profile.links[0].href, '_blank', 'noopener,noreferrer')}
+          >
+            github.com/{accounts.github}
+          </button>
+        </div>
+        <div className="visual-panel" aria-hidden="true">
+          <img src={heroSlab} alt="" />
+          <div>
+            <span>ready</span>
+            <b>ship polished interfaces</b>
+          </div>
+        </div>
+      </section>
     </main>
   )
 }
 
-function TopBar({ focusedPane, theme, onFocus }) {
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { error: null }
+  }
+
+  static getDerivedStateFromError(error) {
+    return { error }
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <main className="site theme-amber">
+          <section className="crash-panel">
+            <p className="kicker">portfolio-os recovered</p>
+            <h1>Something broke during render.</h1>
+            <p>
+              The page did not disappear; reload once to retry with fresh telemetry.
+              If it keeps happening, clear the browser cache for this site.
+            </p>
+            <button type="button" onClick={() => window.location.reload()}>
+              Reload portfolio
+            </button>
+            <button
+              type="button"
+              className="ghost-button"
+              onClick={() => {
+                clearSolvingCache()
+                window.location.reload()
+              }}
+            >
+              Clear cache and reload
+            </button>
+          </section>
+        </main>
+      )
+    }
+
+    return this.props.children
+  }
+}
+
+function Header({ activeSection, clock, onCommandFocus, onJump, onTheme, theme }) {
   return (
-    <header className="top-bar">
-      <nav>
-        {panes.map((pane, index) => (
+    <header className="topbar">
+      <button className="brand" type="button" onClick={() => onJump('home')}>
+        <span>d1vyansh</span>
+        <b>portfolio-os</b>
+      </button>
+      <nav aria-label="Sections">
+        {sections.map((section, index) => (
           <button
-            key={pane}
+            className={activeSection === section ? 'active' : ''}
+            key={section}
             type="button"
-            className={focusedPane === pane ? 'active' : ''}
-            aria-label={`workspace ${index + 1} ${pane}`}
-            onClick={() => onFocus(pane)}
-            tabIndex={-1}
+            onClick={() => onJump(section)}
           >
-            {index + 1}
+            {index + 1} {section}
           </button>
         ))}
       </nav>
-      <div className="song">♪ Lamp - quiet terminal hour</div>
-      <div className="sys">
-        <span>{theme}</span>
-        <span>68%</span>
-        <span>23:00</span>
+      <div className="top-actions">
+        <button type="button" onClick={onCommandFocus}>ctrl+k</button>
+        <button type="button" onClick={onTheme}>{theme}</button>
+        <time>{clock.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</time>
       </div>
     </header>
   )
 }
 
-function TerminalWindow({ children, title, pane, focusedPane, className, onFocus }) {
-  const active = pane === focusedPane
+function CommandCenter({ command, commandRef, history, onCommand, onRun, query, searchHits, setQuery }) {
+  const outputRef = useRef(null)
+
+  useEffect(() => {
+    if (outputRef.current) outputRef.current.scrollTop = outputRef.current.scrollHeight
+  }, [history])
 
   return (
-    <section
-      className={`terminal-window ${active ? 'focused' : ''} ${className}`}
-      onClick={() => onFocus(pane)}
-    >
-      <header className="window-title">
-        <span>{title}</span>
-        <div>
-          <i />
-          <i />
-          <i />
+    <aside className="command-card" id="command">
+      <div className="window-head">
+        <span>command-center</span>
+        <i />
+      </div>
+      <div className="command-body">
+        <div className="fastfetch">
+          <pre>{asciiMark}</pre>
+          <div>
+            <Info label="user" value={`${profile.handle}@${profile.host}`} />
+            <Info label="role" value={profile.role} />
+            <Info label="wm" value="Hyprland" />
+            <Info label="editor" value="Neovim" />
+            <Info label="mode" value="one-page portfolio" />
+          </div>
         </div>
-      </header>
-      <div className="window-body">{children}</div>
-    </section>
+
+        <label className="search-line">
+          <span>search</span>
+          <input
+            autoComplete="off"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="project, stack, signal..."
+            value={query}
+          />
+        </label>
+
+        <div className="hits">
+          {searchHits.slice(0, 5).map((hit) => (
+            <button key={hit.id} type="button" onClick={() => onRun(`open ${hit.id}`)}>
+              <span>{hit.label}</span>
+              <b>{hit.type}</b>
+            </button>
+          ))}
+        </div>
+
+        <div className="terminal-output" ref={outputRef}>
+          {history.map((item, index) => <p key={`${item}-${index}`}>{item}</p>)}
+        </div>
+
+        <form
+          className="prompt"
+          onSubmit={(event) => {
+            event.preventDefault()
+            onRun()
+          }}
+        >
+          <span>$</span>
+          <input
+            autoCapitalize="none"
+            autoComplete="off"
+            autoCorrect="off"
+            list="command-list"
+            onChange={(event) => onCommand(event.target.value)}
+            placeholder="help, open dotfiles, search react, theme"
+            ref={commandRef}
+            spellCheck="false"
+            value={command}
+          />
+          <datalist id="command-list">
+            {commands.map((item) => <option key={item} value={item} />)}
+            {projects.map((project) => <option key={project.id} value={`open ${project.id}`} />)}
+          </datalist>
+        </form>
+      </div>
+    </aside>
   )
 }
 
-function Fastfetch() {
+function SolvingDashboard({
+  filter,
+  progress,
+  recentActivity,
+  setFilter,
+  solvingData,
+  solvingSummary,
+  visibleActivity,
+  onRefresh,
+  onResetCache,
+}) {
   return (
-    <section className="fastfetch">
-      <pre aria-hidden="true">
-{`⣿⣿⣿⣿⡿⢟⣛⣫⡍⡉⢩⣭⣛⡻⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-⣿⣿⠟⢥⣾⡿⣿⣿⡻⡄⠀⣿⣿⣿⢦⠈⡛⢿⣿⣿⣿⣿⣿⣿
-⣿⢣⡎⠸⣿⠘⡜⢿⣿⢿⡄⢸⣿⢻⡏⠀⠈⢳⠝⢿⣿⣿⣿⣿
-⣇⢸⢱⢀⠹⣆⠈⢆⠻⣦⠂⠀⡇⠘⠃⠀⠀⠀⠉⠃⠹⣿⣿⣿
-⠈⢸⠈⢸⡆⡌⢂⠀⢂⠈⢣⠀⠁⡇⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿
-⠀⢸⢀⠀⣿⣜⣆⠁⠀⠑⣀⠡⠀⡇⠀⠤⡀⠀⢠⣐⣶⣦⣤⣬
-⠀⠸⠈⣦⢸⣿⣾⣿⣶⠂⠈⠁⡀⡇⠀⣿⡇⠀⡀⣿⣿⣿⣿⣿
-⢠⡀⠀⠈⠁⠹⣿⣿⣧⣧⣀⣤⡇⠃⠀⡩⠃⠀⣧⢹⣿⣿⣿⣿
-⣼⡇⠀⠀⢧⣴⣿⣿⣿⣿⣿⣿⠇⠀⠀⠀⠀⠀⢹⣸⣿⣿⣿⣿
-⣿⡇⢀⠀⠸⣿⣷⣿⣛⣿⣿⡿⠀⠀⠀⠀⠀⠀⠘⡇⣿⣿⣿⣿
-⣿⣷⢸⠀⠀⠈⠛⠿⣿⠿⣫⣴⠀⠀⠀⠀⠀⢠⠀⢡⢻⣿⣿⣿
-⣿⣿⡀⡇⠀⠀⠀⠀⠀⢸⣿⡟⠀⢰⡀⠀⠀⢸⡇⠸⣸⣿⣿⣿
-⣿⣿⡇⢰⠀⠀⠀⣠⣴⠿⣟⠁⠀⣞⣿⡶⡠⣈⡃⠀⠀⣿⣿⣿
-⣿⣿⣷⠈⢰⢎⣾⣿⣵⣿⣿⠀⠰⠿⢟⡜⣼⣿⣿⡆⠀⢻⣿⣿
-⣿⣿⣧⡃⠀⣿⡟⠛⠿⣶⠆⢀⣿⣾⣿⢇⣿⣿⣿⣷⠀⢸⣿⣿`}
-      </pre>
-      <div>
-        <Info label="user" value={`${profile.user}@${profile.host}`} />
-        <Info label="role" value={profile.role} />
-        <Info label="wm" value={profile.wm} />
-        <Info label="shell" value={profile.shell} />
-        <Info label="terminal" value={profile.terminal} />
-        <Info label="editor" value={profile.editor} />
-        <Info label="uptime" value={profile.uptime} />
-        <div className="swatches">
-          {profile.palette.map((color) => (
-            <span key={color} style={{ background: color }} />
+    <div className="solving-grid">
+      <section className="progress-panel">
+        <div className="progress-head">
+          <div>
+            <b>{solvingSummary.totalSolved}</b>
+            <span>accepted problems tracked</span>
+          </div>
+          <Metric label="active days" value={progress.activeDays} />
+          <Metric label="current streak" value={progress.currentStreak} />
+          <Metric label="max streak" value={progress.maxStreak} />
+          <button type="button" onClick={onRefresh}>
+            {solvingData.loading ? 'syncing' : 'refresh'}
+          </button>
+          <button type="button" onClick={onResetCache}>
+            reset cache
+          </button>
+        </div>
+
+        <div className="platform-filters" aria-label="Problem solving filters">
+          {Object.entries(platformMeta).map(([id, item]) => (
+            <button
+              className={filter === id ? 'selected' : ''}
+              key={id}
+              type="button"
+              onClick={() => setFilter(id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        <ActivityCalendar days={progress.days} monthLabels={progress.monthLabels} />
+
+        <div className="progress-foot">
+          <span>Includes accepted submissions where public APIs expose dates.</span>
+          <div className="legend">
+            <span>Less</span>
+            {[0, 1, 2, 3, 4].map((level) => <i className={`level-${level}`} key={level} />)}
+            <span>More</span>
+          </div>
+        </div>
+      </section>
+
+      <aside className="account-panel">
+        <div className="panel-title">
+          <span>accounts</span>
+          <small>{solvingData.updatedAt ? `updated ${formatTime(solvingData.updatedAt)}` : 'waiting'}</small>
+        </div>
+        <div className="account-list">
+          {solvingData.platforms.map((item) => (
+            <a className="account-row" href={item.href} key={item.id} rel="noreferrer" target="_blank">
+              <span>{item.label}</span>
+            <b>{item.primary}</b>
+            <small>{item.secondary}</small>
+              <i className={item.ok ? 'ok' : 'warn'}>{item.status ?? (item.ok ? 'live' : 'limited')}</i>
+            </a>
+          ))}
+        </div>
+      </aside>
+
+      <section className="combine-panel">
+        <div className="panel-title">
+          <span>combined signal</span>
+        </div>
+        <div className="combine-stats">
+          <Metric label="submissions this year" value={progress.total} />
+          <Metric label="active platforms" value={solvingSummary.livePlatforms} />
+          <Metric label="github public events" value={solvingSummary.githubEvents} />
+          <Metric label="filtered activity" value={visibleActivity.length} />
+        </div>
+        <p>
+          Live coding profiles sync automatically. The YouTube stream link stays in contact
+          so the dashboard remains focused on coding activity.
+        </p>
+      </section>
+
+      <section className="recent-panel">
+        <div className="panel-title">
+          <span>recent accepts / commits</span>
+          <small>{platformMeta[filter].label}</small>
+        </div>
+        <div className="recent-list">
+          {recentActivity.length > 0 ? recentActivity.slice(0, 12).map((item) => (
+            <a className="recent-row" href={item.href} key={item.id} rel="noreferrer" target="_blank">
+              <span>{platformMeta[item.platform]?.short ?? item.platform}</span>
+              <b>{item.title}</b>
+              <small>{item.meta}</small>
+              <time>{formatRelativeDate(item.date)}</time>
+            </a>
+          )) : (
+            <p>No recent public activity available for this filter yet.</p>
+          )}
+        </div>
+      </section>
+    </div>
+  )
+}
+
+function Metric({ label, value }) {
+  return (
+    <div className="metric">
+      <b>{value}</b>
+      <span>{label}</span>
+    </div>
+  )
+}
+
+function ActivityCalendar({ days, monthLabels }) {
+  return (
+    <div className="activity-wrap">
+      <div className="months">
+        {monthLabels.map((item) => (
+          <span key={item.month} style={{ gridColumn: `${item.column} / span 4` }}>
+            {item.month}
+          </span>
+        ))}
+      </div>
+      <div className="calendar-row">
+        <div className="weekdays">
+          <span>Mon</span>
+          <span>Wed</span>
+          <span>Fri</span>
+        </div>
+        <div className="activity-grid" style={{ gridTemplateColumns: `repeat(${Math.ceil(days.length / 7)}, 11px)` }}>
+          {days.map((day) => (
+            <span
+              aria-label={`${day.date}: ${day.count} accepted activity`}
+              className={`level-${day.level}`}
+              key={day.key}
+              title={`${day.date}: ${day.count}`}
+            />
           ))}
         </div>
       </div>
-    </section>
+    </div>
+  )
+}
+
+function ProjectList({ filteredProjects, selectedProjectId, setQuery, setSelectedFileIndex, setSelectedProjectId }) {
+  return (
+    <aside className="project-list">
+      <div className="panel-title">
+        <span>projects</span>
+        <button type="button" onClick={() => setQuery('')}>reset</button>
+      </div>
+      {filteredProjects.map((project) => (
+        <button
+          className={selectedProjectId === project.id ? 'project-row selected' : 'project-row'}
+          key={project.id}
+          type="button"
+          onClick={() => {
+            setSelectedProjectId(project.id)
+            setSelectedFileIndex(0)
+          }}
+        >
+          <span>{project.title}</span>
+          <b>{project.kind}</b>
+        </button>
+      ))}
+    </aside>
+  )
+}
+
+function FileBrowser({ selectedFile, selectedFileIndex, selectedProject, setSelectedFileIndex }) {
+  return (
+    <aside className="file-browser">
+      <div className="panel-title">
+        <span>files/{selectedProject.id}</span>
+      </div>
+      <div className="file-layout">
+        <div className="file-list">
+          {selectedProject.files.map((file, index) => (
+            <button
+              className={selectedFileIndex === index ? 'selected' : ''}
+              key={file[0]}
+              type="button"
+              onClick={() => setSelectedFileIndex(index)}
+            >
+              {file[0]}
+            </button>
+          ))}
+        </div>
+        <article className="file-preview">
+          <header>{selectedFile[0]}</header>
+          <p>{selectedFile[1]}</p>
+        </article>
+      </div>
+    </aside>
+  )
+}
+
+function ProjectDetail({ project }) {
+  return (
+    <article className="project-detail">
+      <p>{project.kind}</p>
+      <h3>{project.title}</h3>
+      <strong>{project.signal}</strong>
+      <span>{project.impact}</span>
+      <div className="stack">
+        {project.stack.map((item) => <b key={item}>{item}</b>)}
+      </div>
+      <a href={project.href}>open context</a>
+    </article>
+  )
+}
+
+function SectionTitle({ eyebrow, text, title }) {
+  return (
+    <div className="section-title">
+      <p>{eyebrow}</p>
+      <h2>{title}</h2>
+      <span>{text}</span>
+    </div>
   )
 }
 
 function Info({ label, value }) {
   return (
-    <p className="info-row">
+    <p className="info">
       <span>{label}</span>
       <b>{value}</b>
     </p>
   )
 }
 
-function ShellOutput({
-  lines,
-  currentLine,
-  completionOptions,
-  completionIndex,
-  inputRef,
-  onInputChange,
-  onInputFocus,
-  onInputKeyDown,
-}) {
-  const outputRef = useRef(null)
-
-  useEffect(() => {
-    if (outputRef.current) {
-      outputRef.current.scrollTop = outputRef.current.scrollHeight
-    }
-  }, [lines, currentLine, completionOptions])
-
+function BackgroundGrid() {
   return (
-    <div className="shell-output" onClick={() => inputRef.current?.focus()} ref={outputRef}>
-      {lines.map((item, index) => (
-        item === ''
-          ? <br key={`${item}-${index}`} />
-          : <p className={item.startsWith(shellPrompt) ? 'submitted-line' : ''} key={`${item}-${index}`}>{item}</p>
-      ))}
-      <div className="prompt-line">
-        <span className="prompt">{shellPrompt}</span>
-        <input
-          ref={inputRef}
-          aria-label="Terminal command"
-          autoCapitalize="none"
-          autoComplete="off"
-          autoCorrect="off"
-          className="terminal-input"
-          inputMode="text"
-          onChange={onInputChange}
-          onFocus={onInputFocus}
-          onKeyDown={onInputKeyDown}
-          spellCheck="false"
-          value={currentLine}
-        />
-      </div>
-      {completionOptions.length > 0 && (
-        <div className="completion-menu">
-          {completionOptions.map((item, index) => (
-            <span className={index === completionIndex ? 'active' : ''} key={item}>{item}</span>
-          ))}
-        </div>
-      )}
+    <div className="background" aria-hidden="true">
+      <span />
+      <span />
+      <span />
     </div>
   )
 }
 
-function FileColumn({ label, active, items, selected, onSelect }) {
-  const columnRef = useRef(null)
+function createEmptySolvingData() {
+  return {
+    activity: [],
+    loading: true,
+    platforms: [
+      platformFallback('codeforces', 'Codeforces', `@${accounts.codeforces}`, 'waiting for API'),
+      platformFallback('atcoder', 'AtCoder', `@${accounts.atcoder}`, 'waiting for API'),
+      platformFallback('leetcode', 'LeetCode', `@${accounts.leetcode}`, 'waiting for API'),
+      usacoPlatform(),
+      platformFallback('github', 'GitHub', `@${accounts.github}`, 'waiting for API'),
+    ],
+    recent: [],
+    updatedAt: null,
+  }
+}
 
-  useEffect(() => {
-    const selectedItem = columnRef.current?.querySelector('.selected')
-    scrollChildIntoContainer(columnRef.current, selectedItem)
-  }, [selected])
+function readCachedSolvingData() {
+  try {
+    const rawValue = window.localStorage.getItem(cacheKey)
+    if (!rawValue) return null
+    const cached = JSON.parse(rawValue)
+    if (!Array.isArray(cached.platforms) || !Array.isArray(cached.activity)) return null
 
-  return (
-    <section className={`file-column ${active ? 'active' : ''}`} ref={columnRef}>
-      <header>{label}</header>
-      {items.map((item, index) => (
-        <div
-          key={item}
-          className={index === selected ? 'selected' : ''}
-          onClick={() => onSelect(index)}
-        >
-          <span>{index === selected ? '>' : ' '}</span>
-          {item}
-        </div>
-      ))}
-    </section>
+    return {
+      activity: cached.activity,
+      loading: false,
+      platforms: cached.platforms,
+      recent: (cached.recent ?? [])
+        .map((item) => ({ ...item, date: new Date(item.date) }))
+        .filter((item) => !Number.isNaN(item.date.getTime())),
+      updatedAt: cached.updatedAt ? new Date(cached.updatedAt) : null,
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeCachedSolvingData(data) {
+  try {
+    window.localStorage.setItem(cacheKey, JSON.stringify({
+      activity: data.activity,
+      platforms: data.platforms,
+      recent: data.recent,
+      updatedAt: data.updatedAt?.toISOString() ?? null,
+    }))
+  } catch {
+    // Cache is only a speed/resilience layer; the live dashboard still works without it.
+  }
+}
+
+function clearSolvingCache() {
+  try {
+    window.localStorage.removeItem(cacheKey)
+  } catch {
+    // Cache clearing is best-effort.
+  }
+}
+
+async function fetchSolvingData() {
+  const results = await Promise.allSettled([
+    fetchCodeforces(),
+    fetchAtCoder(),
+    fetchLeetCode(),
+    fetchGitHub(),
+  ])
+
+  const platforms = results.map((result, index) => (
+    result.status === 'fulfilled' ? result.value : fallbackByIndex(index)
+  ))
+  platforms.splice(3, 0, usacoPlatform())
+
+  return {
+    activity: platforms.flatMap((item) => item.activity),
+    loading: false,
+    platforms,
+    recent: platforms.flatMap((item) => item.recent).sort((a, b) => b.date - a.date),
+    updatedAt: new Date(),
+  }
+}
+
+async function fetchCodeforces() {
+  const [userResponse, submissionsResponse] = await Promise.all([
+    fetchJson(`https://codeforces.com/api/user.info?handles=${accounts.codeforces}`),
+    fetchJson(`https://codeforces.com/api/user.status?handle=${accounts.codeforces}`),
+  ])
+  if (userResponse.status !== 'OK' || submissionsResponse.status !== 'OK') {
+    throw new Error('Codeforces response was not OK')
+  }
+
+  const user = userResponse.result[0] ?? {}
+  const accepted = submissionsResponse.result.filter((item) => item.verdict === 'OK')
+  const solved = new Set(accepted.map((item) => problemKey(item.problem)))
+  const activity = accepted
+    .filter((item) => isCurrentYear(item.creationTimeSeconds))
+    .map((item) => activityItem('codeforces', item.creationTimeSeconds))
+
+  return {
+    activity,
+    href: `https://codeforces.com/profile/${accounts.codeforces}`,
+    id: 'codeforces',
+    label: 'Codeforces',
+    ok: true,
+    primary: `${user.rating ?? 'unrated'} rating`,
+    recent: accepted.slice(0, 8).map((item) => ({
+      date: new Date(item.creationTimeSeconds * 1000),
+      href: codeforcesProblemHref(item.problem),
+      id: `cf-${item.id}`,
+      meta: `${item.programmingLanguage ?? 'submission'} | ${formatContest(item.problem)}`,
+      platform: 'codeforces',
+      title: item.problem?.name ?? 'Accepted problem',
+    })),
+    secondary: `${solved.size} solved | max ${user.maxRating ?? 'n/a'}`,
+    totalSolved: solved.size,
+  }
+}
+
+async function fetchAtCoder() {
+  const submissions = await fetchJson(
+    `https://kenkoooo.com/atcoder/atcoder-api/v3/user/submissions?user=${accounts.atcoder}&from_second=0`,
   )
+  const accepted = submissions.filter((item) => item.result === 'AC')
+  const solved = new Set(accepted.map((item) => item.problem_id))
+  const activity = accepted
+    .filter((item) => isCurrentYear(item.epoch_second))
+    .map((item) => activityItem('atcoder', item.epoch_second))
+
+  return {
+    activity,
+    href: `https://atcoder.jp/users/${accounts.atcoder}`,
+    id: 'atcoder',
+    label: 'AtCoder',
+    ok: true,
+    primary: `${solved.size} AC`,
+    recent: accepted.slice(-8).reverse().map((item) => ({
+      date: new Date(item.epoch_second * 1000),
+      href: `https://atcoder.jp/contests/${item.contest_id}/tasks/${item.problem_id}`,
+      id: `ac-${item.id}`,
+      meta: `${item.language} | ${item.point} pts`,
+      platform: 'atcoder',
+      title: item.problem_id,
+    })),
+    secondary: `${accepted.length} accepted submissions`,
+    totalSolved: solved.size,
+  }
 }
 
-function MatrixRain() {
-  const columns = Array.from({ length: 64 }, (_, index) => {
-    const delay = `${-(index % 11) * 0.8}s`
-    const duration = `${8 + (index % 7)}s`
-    const left = `${(index / 64) * 100}%`
-    const text = '01x#{}[]<>$~/'.repeat(4)
+async function fetchLeetCode() {
+  const stats = await fetchJson(`https://leetcode-api-faisalshohag.vercel.app/${accounts.leetcode}`)
+  const calendar = stats.submissionCalendar ?? {}
+  const activity = Object.entries(calendar)
+    .filter(([epochSeconds]) => isCurrentYear(Number(epochSeconds)))
+    .map(([epochSeconds, count]) => ({
+      count: Number(count),
+      date: toDateKey(new Date(Number(epochSeconds) * 1000)),
+      platform: 'leetcode',
+    }))
 
-    return (
-      <span key={index} style={{ left, animationDelay: delay, animationDuration: duration }}>
-        {text}
-      </span>
-    )
+  return {
+    activity,
+    href: `https://leetcode.com/u/${accounts.leetcode}/`,
+    id: 'leetcode',
+    label: 'LeetCode',
+    ok: true,
+    primary: `${stats.totalSolved ?? stats.solvedProblem ?? 0} solved`,
+    recent: (stats.recentSubmissions ?? [])
+      .filter((item) => item.statusDisplay === 'Accepted')
+      .slice(0, 8)
+      .map((item, index) => ({
+        date: new Date(Number(item.timestamp) * 1000),
+        href: `https://leetcode.com/problems/${item.titleSlug}/`,
+        id: `lc-${item.timestamp}-${index}`,
+        meta: item.lang,
+        platform: 'leetcode',
+        title: item.title,
+      })),
+    secondary: `easy ${stats.easySolved ?? 0} | med ${stats.mediumSolved ?? 0} | hard ${stats.hardSolved ?? 0}`,
+    totalSolved: Number(stats.totalSolved ?? stats.solvedProblem ?? 0),
+  }
+}
+
+async function fetchGitHub() {
+  const [user, events] = await Promise.all([
+    fetchJson(`https://api.github.com/users/${accounts.github}`),
+    fetchJson(`https://api.github.com/users/${accounts.github}/events/public?per_page=100`),
+  ])
+  const usefulEvents = events.filter((item) => ['PushEvent', 'CreateEvent', 'PullRequestEvent'].includes(item.type))
+  const activity = usefulEvents
+    .filter((item) => new Date(item.created_at).getUTCFullYear() === currentYear)
+    .map((item) => ({
+      count: item.type === 'PushEvent' ? Math.max(1, item.payload?.commits?.length ?? 1) : 1,
+      date: toDateKey(new Date(item.created_at)),
+      platform: 'github',
+    }))
+
+  return {
+    activity,
+    href: `https://github.com/${accounts.github}`,
+    id: 'github',
+    label: 'GitHub',
+    ok: true,
+    primary: `${user.public_repos ?? 0} repos`,
+    recent: usefulEvents.slice(0, 8).map((item) => ({
+      date: new Date(item.created_at),
+      href: `https://github.com/${item.repo?.name ?? accounts.github}`,
+      id: `gh-${item.id}`,
+      meta: item.type.replace('Event', ''),
+      platform: 'github',
+      title: item.repo?.name ?? 'GitHub activity',
+    })),
+    secondary: `${usefulEvents.length} recent public events`,
+    totalSolved: 0,
+  }
+}
+
+async function fetchJson(url) {
+  const response = await fetch(url)
+  if (!response.ok) throw new Error(`HTTP ${response.status}`)
+  return response.json()
+}
+
+function fallbackByIndex(index) {
+  const fallbacks = [
+    platformFallback('codeforces', 'Codeforces', `@${accounts.codeforces}`, 'public API unavailable'),
+    platformFallback('atcoder', 'AtCoder', `@${accounts.atcoder}`, 'public API unavailable'),
+    platformFallback('leetcode', 'LeetCode', `@${accounts.leetcode}`, 'unofficial API unavailable'),
+    platformFallback('github', 'GitHub', `@${accounts.github}`, 'public API unavailable'),
+  ]
+  return fallbacks[index]
+}
+
+function usacoPlatform() {
+  return {
+    activity: [],
+    href: 'https://usaco.org/',
+    id: 'usaco',
+    label: 'USACO',
+    ok: false,
+    primary: `@${accounts.usaco}`,
+    recent: [],
+    secondary: 'training account linked',
+    status: 'linked',
+    totalSolved: 0,
+  }
+}
+
+function platformFallback(id, label, primary, secondary) {
+  return {
+    activity: [],
+    href: profile.links.find((link) => link.id === id)?.href ?? '#',
+    id,
+    label,
+    ok: false,
+    primary,
+    recent: [],
+    secondary,
+    totalSolved: 0,
+  }
+}
+
+function summarizeSolving(solvingData) {
+  return {
+    githubEvents: solvingData.platforms.find((item) => item.id === 'github')?.activity.length ?? 0,
+    livePlatforms: solvingData.platforms.filter((item) => item.ok).length,
+    totalSolved: solvingData.platforms.reduce((sum, item) => sum + (item.totalSolved ?? 0), 0),
+  }
+}
+
+function buildProgress(activity) {
+  const counts = activity.reduce((map, item) => {
+    map.set(item.date, (map.get(item.date) ?? 0) + item.count)
+    return map
+  }, new Map())
+  const days = buildYearDays(currentYear).map((day) => {
+    const count = counts.get(day.date) ?? 0
+    return { ...day, count, level: activityLevel(count) }
   })
+  const activeDates = new Set(activity.map((item) => item.date))
 
-  return <div className="matrix-rain" aria-hidden="true">{columns}</div>
-}
-
-function getArrowDirection(key) {
-  const map = {
-    ArrowLeft: 'left',
-    ArrowRight: 'right',
-    ArrowUp: 'up',
-    ArrowDown: 'down',
-  }
-
-  return map[key]
-}
-
-function getLocalDirection(key) {
-  const map = {
-    ArrowLeft: 'left',
-    ArrowRight: 'right',
-    ArrowUp: 'up',
-    ArrowDown: 'down',
-    h: 'left',
-    l: 'right',
-    k: 'up',
-    j: 'down',
-  }
-
-  return map[key] ?? map[key.toLowerCase()]
-}
-
-function findStat(query) {
-  const aliases = {
-    cf: 'codeforces',
-    codeforces: 'codeforces',
-    lc: 'leetcode',
-    leetcode: 'leetcode',
-    gh: 'github',
-    github: 'github',
-    li: 'linkedin',
-    linkedin: 'linkedin',
-    nvim: 'neovim',
-    neovim: 'neovim',
-    linux: 'linux',
-    react: 'react',
-    resume: 'resume',
-  }
-
-  const normalized = aliases[query] ?? query
-  return stats.find((item) => item.name.toLowerCase() === normalized)
-}
-
-function getCompletionCandidates(command, activeFolder) {
-  if (command === 'cd') return tree.map((folder) => folder.name)
-  if (command === 'cat') return tree.flatMap((folder) => folder.files.map((file) => file.name))
-  if (command === 'open') return openTargets
-  if (command === 'theme') return ['amber', 'paper']
-  if (command === 'focus') return panes
-  if (command === 'ls') return activeFolder.files.map((file) => file.name)
-
-  return commandNames
-}
-
-function formatCompletion(cycle, option) {
-  if (cycle.command) return `${cycle.command} ${option}`
-  return `${cycle.hasLeadingSpace ? ' ' : ''}${option}${cycle.trailingSpace ? ' ' : ''}`
-}
-
-function scrollChildIntoContainer(container, child) {
-  if (!container || !child) return
-
-  const containerRect = container.getBoundingClientRect()
-  const childRect = child.getBoundingClientRect()
-
-  if (childRect.top < containerRect.top) {
-    container.scrollTop -= containerRect.top - childRect.top
-  } else if (childRect.bottom > containerRect.bottom) {
-    container.scrollTop += childRect.bottom - containerRect.bottom
+  return {
+    activeDays: activeDates.size,
+    currentStreak: streakEndingToday(activeDates),
+    days,
+    maxStreak: maxStreak(activeDates),
+    monthLabels: buildMonthLabels(currentYear),
+    total: activity.reduce((sum, item) => sum + item.count, 0),
   }
 }
 
-function clamp(value, min, max) {
-  return Math.min(Math.max(value, min), max)
+function filterActivity(activity, filter) {
+  if (filter === 'all') return activity
+  return activity.filter((item) => item.platform === filter)
 }
+
+function filterRecent(recent = [], filter) {
+  if (filter === 'all') return recent
+  return recent.filter((item) => item.platform === filter)
+}
+
+function buildYearDays(year) {
+  const start = new Date(Date.UTC(year, 0, 1))
+  const startOffset = (start.getUTCDay() + 6) % 7
+  const first = new Date(start)
+  first.setUTCDate(first.getUTCDate() - startOffset)
+  const end = new Date(Date.UTC(year, 11, 31))
+  const endOffset = 6 - ((end.getUTCDay() + 6) % 7)
+  const last = new Date(end)
+  last.setUTCDate(last.getUTCDate() + endOffset)
+  const days = []
+
+  for (const date = new Date(first); date <= last; date.setUTCDate(date.getUTCDate() + 1)) {
+    const inYear = date.getUTCFullYear() === year
+    days.push({
+      date: toDateKey(date),
+      inYear,
+      key: `${toDateKey(date)}-${days.length}`,
+    })
+  }
+
+  return days
+}
+
+function buildMonthLabels(year) {
+  return Array.from({ length: 12 }, (_, month) => {
+    const date = new Date(Date.UTC(year, month, 1))
+    const yearStart = new Date(Date.UTC(year, 0, 1))
+    const startOffset = (yearStart.getUTCDay() + 6) % 7
+    const dayDiff = Math.floor((date - yearStart) / 86400000) + startOffset
+    return {
+      column: Math.floor(dayDiff / 7) + 1,
+      month: date.toLocaleString('en', { month: 'short', timeZone: 'UTC' }),
+    }
+  })
+}
+
+function activityLevel(count) {
+  if (count <= 0) return 0
+  if (count === 1) return 1
+  if (count <= 3) return 2
+  if (count <= 6) return 3
+  return 4
+}
+
+function streakEndingToday(activeDates) {
+  let streak = 0
+  for (const date = new Date(); ; date.setUTCDate(date.getUTCDate() - 1)) {
+    if (!activeDates.has(toDateKey(date))) break
+    streak += 1
+  }
+  return streak
+}
+
+function maxStreak(activeDates) {
+  let best = 0
+  let current = 0
+  for (const day of buildYearDays(currentYear)) {
+    if (day.inYear && activeDates.has(day.date)) {
+      current += 1
+      best = Math.max(best, current)
+    } else if (day.inYear) {
+      current = 0
+    }
+  }
+  return best
+}
+
+function activityItem(platform, epochSeconds) {
+  return {
+    count: 1,
+    date: toDateKey(new Date(epochSeconds * 1000)),
+    platform,
+  }
+}
+
+function isCurrentYear(epochSeconds) {
+  return new Date(epochSeconds * 1000).getUTCFullYear() === currentYear
+}
+
+function toDateKey(date) {
+  return date.toISOString().slice(0, 10)
+}
+
+function problemKey(problem = {}) {
+  return `${problem.contestId ?? 'gym'}-${problem.index}-${problem.name}`
+}
+
+function formatTime(date) {
+  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+function formatRelativeDate(date) {
+  const value = date instanceof Date ? date : new Date(date)
+  const diffMs = Date.now() - value.getTime()
+  const diffDays = Math.floor(diffMs / 86400000)
+  if (diffDays <= 0) return 'today'
+  if (diffDays === 1) return 'yesterday'
+  if (diffDays < 30) return `${diffDays}d ago`
+  return value.toLocaleDateString([], { day: '2-digit', month: 'short' })
+}
+
+function codeforcesProblemHref(problem = {}) {
+  if (!problem.contestId) return `https://codeforces.com/profile/${accounts.codeforces}`
+  return `https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}`
+}
+
+function formatContest(problem = {}) {
+  if (!problem.contestId) return 'practice'
+  return `${problem.contestId}${problem.index ?? ''}`
+}
+
+function filterProjects(value) {
+  const query = value.trim().toLowerCase()
+  if (!query) return projects
+  return projects.filter((project) => (
+    [
+      project.title,
+      project.kind,
+      project.signal,
+      project.impact,
+      ...project.stack,
+      ...project.files.flat(),
+    ].join(' ').toLowerCase().includes(query)
+  ))
+}
+
+function buildSearchHits(value) {
+  const projectHits = filterProjects(value).map((project) => ({
+    id: project.id,
+    label: project.title,
+    type: project.kind,
+  }))
+
+  const platformHits = profile.links
+    .filter((link) => !value || `${link.id} ${link.label}`.toLowerCase().includes(value.toLowerCase()))
+    .map((link) => ({ id: link.id, label: link.label, type: 'profile' }))
+
+  const skillHits = skills
+    .filter((skill) => !value || `${skill.name} ${skill.note}`.toLowerCase().includes(value.toLowerCase()))
+    .map((skill) => ({ id: 'skills', label: skill.name, type: 'skill' }))
+
+  return [...platformHits, ...projectHits, ...skillHits]
+}
+
+function findTarget(value) {
+  const normalized = value.trim().toLowerCase()
+  const project = projects.find((item) => (
+    item.id === normalized || item.title.toLowerCase().includes(normalized)
+  ))
+  if (project) return { type: 'project', project }
+
+  const link = profile.links.find((item) => item.id === normalized || item.label.toLowerCase() === normalized)
+  if (link) return { type: 'link', ...link }
+
+  if (sections.includes(normalized)) return { type: 'section', id: normalized, label: normalized }
+  return null
+}
+
+const asciiMark = String.raw`    /\_/\
+   /  _  \
+  /__/ \__\
+  \  \_/  /
+   \_____/
+ portfolio`
 
 export default App
