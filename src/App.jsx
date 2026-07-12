@@ -132,7 +132,8 @@ const platformMeta = {
 }
 
 const currentYear = new Date().getUTCFullYear()
-const cacheKey = 'portfolio-solving-cache-v1'
+const cacheKey = 'portfolio-solving-cache-v2'
+const activityTimeZone = 'Asia/Kolkata'
 
 function App() {
   return (
@@ -667,7 +668,7 @@ function SolvingDashboard({
             <span>accepted problems tracked</span>
           </div>
           <Metric label="active days" value={progress.activeDays} />
-          <Metric label="current streak" value={progress.currentStreak} />
+          <Metric label="active streak" value={progress.currentStreak} />
           <Metric label="max streak" value={progress.maxStreak} />
           <button type="button" onClick={onRefresh}>
             {solvingData.loading ? 'syncing' : 'refresh'}
@@ -1047,7 +1048,7 @@ async function fetchLeetCode() {
     .filter(([epochSeconds]) => isCurrentYear(Number(epochSeconds)))
     .map(([epochSeconds, count]) => ({
       count: Number(count),
-      date: toDateKey(new Date(Number(epochSeconds) * 1000)),
+      date: localDateKey(new Date(Number(epochSeconds) * 1000)),
       platform: 'leetcode',
     }))
 
@@ -1081,10 +1082,10 @@ async function fetchGitHub() {
   ])
   const usefulEvents = events.filter((item) => ['PushEvent', 'CreateEvent', 'PullRequestEvent'].includes(item.type))
   const activity = usefulEvents
-    .filter((item) => new Date(item.created_at).getUTCFullYear() === currentYear)
+    .filter((item) => Number(localDateKey(new Date(item.created_at)).slice(0, 4)) === currentYear)
     .map((item) => ({
       count: item.type === 'PushEvent' ? Math.max(1, item.payload?.commits?.length ?? 1) : 1,
-      date: toDateKey(new Date(item.created_at)),
+      date: localDateKey(new Date(item.created_at)),
       platform: 'github',
     }))
 
@@ -1174,7 +1175,7 @@ function buildProgress(activity) {
 
   return {
     activeDays: activeDates.size,
-    currentStreak: streakEndingToday(activeDates),
+    currentStreak: latestActiveStreak(activeDates),
     days,
     maxStreak: maxStreak(activeDates),
     monthLabels: buildMonthLabels(currentYear),
@@ -1236,9 +1237,12 @@ function activityLevel(count) {
   return 4
 }
 
-function streakEndingToday(activeDates) {
+function latestActiveStreak(activeDates) {
+  const latest = [...activeDates].sort().at(-1)
+  if (!latest) return 0
+
   let streak = 0
-  for (const date = new Date(); ; date.setUTCDate(date.getUTCDate() - 1)) {
+  for (const date = new Date(`${latest}T00:00:00Z`); ; date.setUTCDate(date.getUTCDate() - 1)) {
     if (!activeDates.has(toDateKey(date))) break
     streak += 1
   }
@@ -1262,17 +1266,28 @@ function maxStreak(activeDates) {
 function activityItem(platform, epochSeconds) {
   return {
     count: 1,
-    date: toDateKey(new Date(epochSeconds * 1000)),
+    date: localDateKey(new Date(epochSeconds * 1000)),
     platform,
   }
 }
 
 function isCurrentYear(epochSeconds) {
-  return new Date(epochSeconds * 1000).getUTCFullYear() === currentYear
+  return Number(localDateKey(new Date(epochSeconds * 1000)).slice(0, 4)) === currentYear
 }
 
 function toDateKey(date) {
   return date.toISOString().slice(0, 10)
+}
+
+function localDateKey(date) {
+  const parts = new Intl.DateTimeFormat('en', {
+    day: '2-digit',
+    month: '2-digit',
+    timeZone: activityTimeZone,
+    year: 'numeric',
+  }).formatToParts(date)
+  const value = Object.fromEntries(parts.map((part) => [part.type, part.value]))
+  return `${value.year}-${value.month}-${value.day}`
 }
 
 function problemKey(problem = {}) {

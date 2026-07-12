@@ -8,6 +8,7 @@ One-page React portfolio with a terminal-desktop visual direction and live codin
 - Live Codeforces, AtCoder, LeetCode, and GitHub telemetry.
 - Linked USACO account for `divyansh293`.
 - Combined yearly activity graph with platform filters.
+- Activity dates and streaks bucket by Asia/Kolkata time.
 - Recent accepts and commits feed.
 - Local cache for the last successful telemetry response.
 - One-click telemetry cache reset from the dashboard and recovery screen.
