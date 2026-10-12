@@ -1,40 +1,29 @@
-# Divyansh Portfolio OS
+# qvark — Developer
 
-One-page React portfolio with a terminal-desktop visual direction and live coding telemetry.
+A small, dark portfolio built with React and Vite. It includes a rolling year of public coding activity, focus areas, an about section, profile links, and a downloadable resume.
 
-## Features
-
-- Command center with `help`, `search`, `filter`, `open`, `refresh`, `reset cache`, `theme`, and section jumps.
-- Live Codeforces, AtCoder, LeetCode, and GitHub telemetry.
-- Linked USACO account for `divyansh293`.
-- Combined yearly activity graph with platform filters.
-- Activity dates and streaks bucket by Asia/Kolkata time.
-- Recent accepts and commits feed.
-- Local cache for the last successful telemetry response.
-- One-click telemetry cache reset from the dashboard and recovery screen.
-- Render recovery screen if a browser/runtime edge case occurs.
-- Project workbench, skill signals, and public profile links.
-- Amber and paper themes with `Ctrl+K`, `Alt+1` through `Alt+5`, and `Alt+T`.
-
-## Data Sources
-
-- Codeforces official public API: `d1vyxn5h`
-- AtCoder Problems public API: `d1vyansh`
-- LeetCode community API: `d1vyan5h`
-- USACO linked account: `divyansh293`
-- GitHub official public API: `L0calised`
-- YouTube profile link: `localisedcharge`
-
-## Run
+## Run locally
 
 ```sh
 npm install
 npm run dev
 ```
 
-## Check
+Vite prints the local address after the dev server starts.
+
+## Build and preview
+
+```sh
+npm run build
+npm run preview
+```
+
+## Lint
 
 ```sh
 npm run lint
-npm run build
 ```
+
+The activity heatmap reads public data from Codeforces, AtCoder Problems, and a community LeetCode API. Those services can be temporarily unavailable or change their APIs; the rest of the portfolio remains usable without them. Update the handles in `src/App.jsx` if the public usernames change.
+
+The resume is `resume.pdf` in the project root. Replace that file to update the download.
