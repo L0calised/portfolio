@@ -11,6 +11,7 @@ const activityPlatforms = [
 const handles = { codeforces: 'd1vyxn5h', atcoder: 'qvark', leetcode: 'dvyn5h' }
 
 const work = [
+  { name: 'Ranked', description: 'Practice Codeforces rounds, create custom contests, review submissions, and track a virtual-contest rating estimate.', stack: 'Codeforces · Virtual contests', href: 'https://rankedcf.vercel.app/', source: 'https://github.com/L0calised/ranked' },
   { name: 'Linux setup', description: 'My Arch Linux desktop configuration, built around Hyprland.', stack: 'Arch Linux · Hyprland', href: 'https://github.com/L0calised' },
   { name: 'Algorithms', description: 'Solutions and practice in data structures and problem solving.', stack: 'C++ · Codeforces', href: 'https://codeforces.com/profile/d1vyxn5h' },
   { name: 'Web development', description: 'Interfaces and small utilities built with React and JavaScript.', stack: 'React · JavaScript', href: 'https://github.com/L0calised' },
@@ -131,7 +132,7 @@ function App() {
 
       <section className="work" id="work">
         <div className="section-title"><h2>Focus areas</h2><p>Topics I spend time building and practicing.</p></div>
-        <div className="work-list">{work.map((item) => <a className="work-row" href={item.href} key={item.name} target="_blank" rel="noreferrer"><span className="work-name">{item.name}</span><span className="work-description">{item.description}</span><span className="work-stack">{item.stack}</span><span className="work-arrow">↗</span></a>)}</div>
+        <div className="work-list">{work.map((item) => <div className="work-row" key={item.name}><a className="work-name" href={item.href} target="_blank" rel="noreferrer">{item.name}</a><span className="work-description">{item.description}</span><span className="work-stack">{item.stack}{item.source && <> · <a className="work-source" href={item.source} target="_blank" rel="noreferrer">Source ↗</a></>}</span><a className="work-arrow" href={item.href} target="_blank" rel="noreferrer" aria-label={`Open ${item.name}`}>↗</a></div>)}</div>
       </section>
 
       <section className="about" id="about">
