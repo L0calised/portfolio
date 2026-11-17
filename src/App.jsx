@@ -23,7 +23,7 @@ const profiles = [
   ['AtCoder', '@qvark', 'https://atcoder.jp/users/qvark'],
   ['LeetCode', '@dvyn5h', 'https://leetcode.com/u/dvyn5h/'],
   ['LinkedIn', 'divyansh-sharma', 'https://linkedin.com/in/divyansh-sharma-15a530414'],
-  ['Email', 'localisedchange@gmail.com', 'mailto:localisedchange@gmail.com'],
+  ['Email', 'divyanshsharma293@gmail.com', 'mailto:divyanshsharma293@gmail.com'],
 ]
 
 function App() {
